@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { motion } from 'framer-motion';
 import { goalApi, jobRoleApi } from '../services/api';
 
 const priorities = ['low','medium','high'];
@@ -57,60 +58,101 @@ export default function NewGoal() {
     }
   };
 
+  const containerVariants = {
+    init: { opacity: 0, y: 24 },
+    show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 320, damping: 36 } },
+  };
+
+  const item = {
+    init: { opacity: 0, y: 16 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.18 } },
+  };
+
+  const prefersReduced = typeof window !== 'undefined' && (document.documentElement.classList.contains('reduce-motion') || (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches));
+
   return (
-    <div className="max-w-2xl mx-auto p-6">
-      <h1 className="text-2xl font-semibold mb-4">New Goal</h1>
-      {error && <div className="text-red-600 mb-3 text-sm">{error}</div>}
-      <form onSubmit={onSave} className="space-y-5">
-        <div>
-          <label className="block text-sm mb-1">Title <span className="text-red-500">*</span></label>
-          <input className="input-field w-full" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Earn AWS Solutions Architect" required />
-        </div>
-        <div>
-          <label className="block text-sm mb-1">Description</label>
-          <textarea className="input-field w-full" rows={4} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What is the outcome and why does it matter?" />
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm mb-1">Priority</label>
-            <select className="input-field w-full" value={priority} onChange={(e) => setPriority(e.target.value)}>
-              {priorities.map(p => <option key={p} value={p}>{p}</option>)}
-            </select>
+    <div className="min-h-screen app-bg flex items-end">
+      <motion.div
+        className="w-full rounded-t-3xl ring-1 ring-black/5 shadow-2xl bg-white/85 dark:bg-zinc-900/70 backdrop-blur"
+        initial={prefersReduced ? undefined : 'init'}
+        animate={prefersReduced ? undefined : 'show'}
+        variants={containerVariants}
+      >
+        <div className="max-w-2xl mx-auto p-6">
+          <div className="mx-auto mb-4 h-1 w-14 rounded-full bg-zinc-300/70 dark:bg-zinc-700" aria-hidden="true" />
+          <div className="flex items-center justify-between mb-2">
+            <h1 className="text-xl font-semibold">New Goal</h1>
+            <button type="button" onClick={() => { window.location.hash = '#/'; }} className="btn-secondary btn-wire-sm">Cancel</button>
           </div>
-          <div>
-            <label className="block text-sm mb-1">Due date</label>
-            <input type="date" className="input-field w-full" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
-          </div>
+          {error && <div className="text-red-600 mb-3 text-sm">{error}</div>}
+
+          <motion.form onSubmit={onSave} className="space-y-5" initial={false}>
+            <motion.div variants={item} initial={prefersReduced ? undefined : 'init'} animate={prefersReduced ? undefined : 'show'}>
+              <label className="block text-sm mb-1">Title <span className="text-red-500">*</span></label>
+              <input className="input-field w-full" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Earn AWS Solutions Architect" required />
+            </motion.div>
+
+            <motion.div variants={item} initial={prefersReduced ? undefined : 'init'} animate={prefersReduced ? undefined : 'show'}>
+              <label className="block text-sm mb-1">Description</label>
+              <textarea className="input-field w-full" rows={4} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What is the outcome and why does it matter?" />
+            </motion.div>
+
+            <motion.div className="grid grid-cols-1 sm:grid-cols-2 gap-4" variants={item} initial={prefersReduced ? undefined : 'init'} animate={prefersReduced ? undefined : 'show'}>
+              <div>
+                <label className="block text-sm mb-1">Priority</label>
+                <div className="flex gap-2">
+                  {priorities.map(p => (
+                    <button
+                      key={p}
+                      type="button"
+                      onClick={() => setPriority(p)}
+                      className={`btn-wire btn-wire-sm ${priority === p ? 'ring-2 ring-accent-500' : ''}`}
+                      aria-pressed={priority === p}
+                    >
+                      {p}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm mb-1">Due date</label>
+                <input type="date" className="input-field w-full" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+              </div>
+            </motion.div>
+
+            <motion.div variants={item} initial={prefersReduced ? undefined : 'init'} animate={prefersReduced ? undefined : 'show'}>
+              <label className="block text-sm mb-1">Tags</label>
+              <div className="flex gap-2">
+                <input className="input-field flex-1" placeholder="Press Enter to add" value={tagsInput} onChange={(e) => setTagsInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addTag(); } }} />
+                <button type="button" className="btn-secondary" onClick={addTag}>Add</button>
+              </div>
+              {tags.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {tags.map(t => (
+                    <span key={t} className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-sm bg-zinc-100 border border-zinc-200">
+                      {t}
+                      <button type="button" onClick={() => removeTag(t)} className="ml-1 text-zinc-500 hover:text-zinc-800">×</button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </motion.div>
+
+            <motion.div variants={item} initial={prefersReduced ? undefined : 'init'} animate={prefersReduced ? undefined : 'show'}>
+              <label className="block text-sm mb-1">Job role (optional)</label>
+              <select className="input-field w-full" value={jobRoleId} onChange={(e) => setJobRoleId(e.target.value)}>
+                <option value="">None</option>
+                {jobRoles.map(r => <option key={r.id} value={r.id}>{r.title}</option>)}
+              </select>
+            </motion.div>
+
+            <motion.div className="flex gap-3 pt-2" variants={item} initial={prefersReduced ? undefined : 'init'} animate={prefersReduced ? undefined : 'show'}>
+              <button type="button" className="btn-secondary" onClick={() => { window.location.hash = '#/'; }}>Cancel</button>
+              <button type="submit" className="btn-primary" disabled={!canSave}>{submitting ? 'Saving…' : 'Save goal'}</button>
+            </motion.div>
+          </motion.form>
         </div>
-        <div>
-          <label className="block text-sm mb-1">Tags</label>
-          <div className="flex gap-2">
-            <input className="input-field flex-1" placeholder="Press Enter to add" value={tagsInput} onChange={(e) => setTagsInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addTag(); } }} />
-            <button type="button" className="btn-secondary" onClick={addTag}>Add</button>
-          </div>
-          {tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-2">
-              {tags.map(t => (
-                <span key={t} className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-sm bg-zinc-100 border border-zinc-200">
-                  {t}
-                  <button type="button" onClick={() => removeTag(t)} className="ml-1 text-zinc-500 hover:text-zinc-800">×</button>
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-        <div>
-          <label className="block text-sm mb-1">Job role (optional)</label>
-          <select className="input-field w-full" value={jobRoleId} onChange={(e) => setJobRoleId(e.target.value)}>
-            <option value="">None</option>
-            {jobRoles.map(r => <option key={r.id} value={r.id}>{r.title}</option>)}
-          </select>
-        </div>
-        <div className="flex gap-3 pt-2">
-          <button type="button" className="btn-secondary" onClick={() => { window.location.hash = '#/'; }}>Cancel</button>
-          <button type="submit" className="btn-primary" disabled={!canSave}>{submitting ? 'Saving…' : 'Save goal'}</button>
-        </div>
-      </form>
+      </motion.div>
     </div>
   );
 }
