@@ -42,7 +42,7 @@ func hashPosting(r RawPosting) string {
     return hex.EncodeToString(h[:])
 }
 
-func upsertPosting(r RawPosting) (bool, error) {
+func upsertPostingRaw(r RawPosting, bulletsJSON string, minYears *int, maxYears *int) (bool, error) {
     var src models.JobSource
     if err := database.DB.Where("name = ?", r.SourceName).FirstOrCreate(&src, models.JobSource{Name: r.SourceName, Type: "remote", BaseURL: ""}).Error; err != nil {
         return false, err
@@ -61,6 +61,9 @@ func upsertPosting(r RawPosting) (bool, error) {
         Location: r.Location,
         EmploymentType: r.EmploymentType,
         DescriptionText: r.DescriptionHTML,
+        Requirements: bulletsJSON,
+        YearsExperienceMin: minYears,
+        YearsExperienceMax: maxYears,
         DatePosted: r.DatePosted,
         Hash: h,
         FetchedAt: time.Now().UTC(),
@@ -80,7 +83,10 @@ func RunOnce(ctx context.Context) (Status, error) {
         if err != nil { st.Errors = append(st.Errors, p.Name()+": "+err.Error()); continue }
         st.PostingsFetched += len(raws)
         for _, r := range raws {
-            ok, err := upsertPosting(r)
+            // Parse description for structured fields
+            descText, bulletsJSON, minY, maxY := ExtractPostingFields(r.DescriptionHTML)
+            if descText != "" { r.DescriptionHTML = descText }
+            ok, err := upsertPostingRaw(r, bulletsJSON, minY, maxY)
             if err != nil { st.Errors = append(st.Errors, err.Error()); continue }
             if ok { st.PostingsUpserted++ } else { st.Deduped++ }
         }
