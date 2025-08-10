@@ -21,7 +21,7 @@ const asideVariants = {
 };
 
 const listVariants = {
-  open: { transition: { staggerChildren: 0.05, delayChildren: 0.04 } },
+  open: { transition: { staggerChildren: 0.06, delayChildren: 0.05 } },
   closed: { transition: { staggerChildren: 0.03, staggerDirection: -1 } },
 };
 
@@ -74,7 +74,7 @@ export default function DesktopNav({ expanded, onToggle, route }) {
                 exit={{ opacity: 0, y: -4 }}
                 transition={{ duration: 0.16 }}
               >
-                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-accent-600 text-white text-lg leading-none">+</span>
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-accent-600 text-white text-lg leading-none transition-none">+</span>
                 <span className="font-medium">New goal</span>
               </motion.button>
             )}
@@ -94,10 +94,10 @@ export default function DesktopNav({ expanded, onToggle, route }) {
               variants={itemVariants}
               onClick={navTo(item.hash)}
               className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-800 ${route === item.hash ? 'bg-gray-100 dark:bg-zinc-800/80' : ''}`}
-              layout
+              layout="position"
               transition={{ type: 'spring', stiffness: 420, damping: 36 }}
             >
-              <span className="w-6 h-6 inline-flex items-center justify-center">
+              <span className="w-6 h-6 inline-flex items-center justify-center shrink-0 transition-none">
                 {item.icon('w-5 h-5')}
               </span>
               <div className="relative overflow-hidden">
@@ -108,7 +108,7 @@ export default function DesktopNav({ expanded, onToggle, route }) {
                       initial={{ clipPath: 'inset(0% 100% 0% 0%)' }}
                       animate={{ clipPath: 'inset(0% 0% 0% 0%)' }}
                       exit={{ clipPath: 'inset(0% 100% 0% 0%)' }}
-                      transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                      transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
                     >
                       {item.title}
                     </motion.span>
@@ -123,31 +123,24 @@ export default function DesktopNav({ expanded, onToggle, route }) {
         {expanded ? (
           <div className="border-t px-3 py-2 space-y-2">
             <button onClick={() => { const root = document.documentElement; const isDark = root.classList.toggle('dark'); localStorage.setItem('theme', isDark ? 'dark' : 'light'); }} className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-100 dark:hover:bg-zinc-800">
-              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-zinc-200 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-100 text-sm">🌓</span>
-              <span className="font-medium">Dark Mode</span>
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-zinc-200 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-100 text-sm transition-none">🌓</span>
+              <motion.span initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -6 }} transition={{ duration: 0.16 }}>Dark Mode</motion.span>
             </button>
             <button onClick={() => { const root = document.documentElement; const enabled = root.classList.toggle('reduce-motion'); localStorage.setItem('reduceMotion', enabled ? '1' : '0'); }} className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-100 dark:hover:bg-zinc-800">
-              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-zinc-200 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-100 text-sm">⌘</span>
-              <span className="font-medium">Reduce Motion</span>
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-zinc-200 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-100 text-sm transition-none">⌘</span>
+              <motion.span initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -6 }} transition={{ duration: 0.16 }}>Reduce Motion</motion.span>
             </button>
-            <motion.button
-              onClick={navTo('#/profile')}
-              className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-100 dark:hover:bg-zinc-800 w-full"
-              initial={false}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -6 }}
-              transition={{ duration: 0.16 }}
-            >
-              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-100 text-xs font-semibold">M</span>
-              <span className="font-medium">Profile</span>
-            </motion.button>
+            <button onClick={navTo('#/profile')} className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-100 dark:hover:bg-zinc-800 w-full">
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-100 text-xs font-semibold transition-none">M</span>
+              <motion.span initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -6 }} transition={{ duration: 0.16 }}>Profile</motion.span>
+            </button>
           </div>
         ) : (
           <div className="border-t px-2 py-3">
             <div className="w-full flex flex-col items-center gap-3">
-              <button onClick={() => { const root = document.documentElement; const isDark = root.classList.toggle('dark'); localStorage.setItem('theme', isDark ? 'dark' : 'light'); }} className="h-8 w-8 inline-flex items-center justify-center rounded-full bg-zinc-200 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-100 text-sm">🌓</button>
-              <button onClick={() => { const root = document.documentElement; const enabled = root.classList.toggle('reduce-motion'); localStorage.setItem('reduceMotion', enabled ? '1' : '0'); }} className="h-8 w-8 inline-flex items-center justify-center rounded-full bg-zinc-200 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-100 text-sm">⌘</button>
-              <button onClick={navTo('#/profile')} className="h-8 w-8 inline-flex items-center justify-center rounded-full bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-100 text-xs font-semibold">M</button>
+              <button onClick={() => { const root = document.documentElement; const isDark = root.classList.toggle('dark'); localStorage.setItem('theme', isDark ? 'dark' : 'light'); }} className="h-8 w-8 inline-flex items-center justify-center rounded-full bg-zinc-200 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-100 text-sm transition-none">🌓</button>
+              <button onClick={() => { const root = document.documentElement; const enabled = root.classList.toggle('reduce-motion'); localStorage.setItem('reduceMotion', enabled ? '1' : '0'); }} className="h-8 w-8 inline-flex items-center justify-center rounded-full bg-zinc-200 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-100 text-sm transition-none">⌘</button>
+              <button onClick={navTo('#/profile')} className="h-8 w-8 inline-flex items-center justify-center rounded-full bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-100 text-xs font-semibold transition-none">M</button>
             </div>
           </div>
         )}
