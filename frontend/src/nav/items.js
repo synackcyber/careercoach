@@ -31,12 +31,5 @@ export const navItems = [
       <svg className={cls} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/></svg>
     )
   },
-  {
-    key: 'profile',
-    title: 'AI Settings',
-    hash: '#/profile',
-    icon: (cls = '') => (
-      <svg className={cls} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/><path d="M19.4 15a7.49 7.49 0 0 1-14.8 0"/></svg>
-    )
-  }
+  // Profile kept accessible via footer/avatar; removing AI Settings item
 ];

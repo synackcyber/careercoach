@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { MagnifyingGlassIcon, CogIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { motion } from 'framer-motion';
 import { useGoals } from '../hooks/useGoals';
 import GoalCard from '../components/GoalCard';
 import SimpleGoalForm from '../components/SimpleGoalForm';
 import ProgressModal from '../components/ProgressModal';
-import AISettings from '../components/AISettings';
+// AI Settings removed
 
 const Dashboard = () => {
   const [filters, setFilters] = useState({});
@@ -15,7 +15,7 @@ const Dashboard = () => {
   const [editingGoal, setEditingGoal] = useState(null);
   const [selectedGoal, setSelectedGoal] = useState(null);
   const [showProgressModal, setShowProgressModal] = useState(false);
-  const [showAISettings, setShowAISettings] = useState(false);
+  // const [showAISettings, setShowAISettings] = useState(false);
 
   const { goals, loading, error, createGoal, updateGoal, deleteGoal } = useGoals(filters);
   // Listen for global "open-new-goal" to open the form from nav components
@@ -99,16 +99,7 @@ const Dashboard = () => {
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-zinc-100">Goal Tracker</h1>
                 <p className="text-gray-600 dark:text-zinc-300 mt-1">Track your personal and professional goals</p>
               </div>
-              <div className="flex items-center space-x-3">
-                <button
-                  onClick={() => setShowAISettings(true)}
-                  className="btn-secondary flex items-center space-x-2"
-                  title="Configure AI Settings"
-                >
-                  <CogIcon className="w-5 h-5" />
-                  <span>AI Settings</span>
-                </button>
-              </div>
+              <div className="flex items-center space-x-3" />
             </div>
 
             {/* Stats */}
@@ -211,10 +202,7 @@ const Dashboard = () => {
         }}
       />
 
-      <AISettings
-        isOpen={showAISettings}
-        onClose={() => setShowAISettings(false)}
-      />
+      {/* AI Settings removed */}
     </div>
   );
 };
