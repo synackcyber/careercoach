@@ -13,6 +13,14 @@ const drawerVariants = { hidden: { x: -24, opacity: 0 }, visible: { x: 0, opacit
 
 export default function Sidebar({ open, onClose }) {
   const navTo = (hash) => (e) => { e.preventDefault(); window.location.hash = hash; onClose?.(); };
+  const onNewGoal = (e) => {
+    e.preventDefault();
+    try {
+      window.dispatchEvent(new Event('open-new-goal'));
+    } catch (_) {}
+    window.location.hash = '#/'
+    onClose?.();
+  };
 
   return (
     <AnimatePresence>
@@ -27,7 +35,7 @@ export default function Sidebar({ open, onClose }) {
               <div className="h-14 flex items-center px-4 border-b font-semibold">Workspace</div>
 
               <div className="px-3 pt-3">
-                <a href="#/" onClick={navTo('#/')} className="flex items-center gap-3 px-3 py-2 rounded-xl bg-accent-50 text-accent-800">
+                <a href="#/" onClick={onNewGoal} className="flex items-center gap-3 px-3 py-2 rounded-xl bg-accent-50 text-accent-800">
                   <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-accent-600 text-white text-lg leading-none">+</span>
                   <span className="font-medium">New goal</span>
                 </a>

@@ -22,6 +22,12 @@ const asideVariants = {
 
 export default function DesktopNav({ expanded, onToggle, route }) {
   const navTo = (hash) => () => { window.location.hash = hash; };
+  const onNewGoal = () => {
+    try {
+      window.dispatchEvent(new Event('open-new-goal'));
+    } catch (_) {}
+    window.location.hash = '#/';
+  };
 
   return (
     <motion.aside
@@ -56,7 +62,7 @@ export default function DesktopNav({ expanded, onToggle, route }) {
         <nav className="px-2 py-3 space-y-1">
           {/* New goal lives here to keep icon order stable */}
           <button
-            onClick={navTo('#/')}
+            onClick={onNewGoal}
             className={`w-full flex items-center ${expanded ? 'gap-3 px-3' : 'gap-0 px-0'} py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-800`}
           >
             <span className="w-6 h-6 aspect-square inline-flex items-center justify-center shrink-0 rounded-full bg-accent-600 text-white text-[12px] leading-none select-none">+</span>
