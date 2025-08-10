@@ -2,12 +2,8 @@ import React, { useEffect, useState } from 'react';
 import Sidebar from './Sidebar';
 import BottomNav from './BottomNav';
 import { useMediaQuery } from '../hooks/useMediaQuery';
-import DesktopNav from './DesktopNav';
+import DesktopNav, { getDesktopNavWidth } from './DesktopNav';
 import { motion } from 'framer-motion';
-
-const RAIL = 56; // collapsed rail width
-const PANEL = 320; // full drawer width
-const SHIFT = PANEL - RAIL; // content shift when expanded
 
 export default function LayoutShell({ route, session, onLogout, children }) {
   const isDesktop = useMediaQuery('(min-width: 1024px)');
@@ -27,9 +23,11 @@ export default function LayoutShell({ route, session, onLogout, children }) {
     if (savedRM === '0') root.classList.remove('reduce-motion');
   }, []);
 
+  const contentPaddingLeft = isDesktop ? getDesktopNavWidth(desktopExpanded) : 0;
+
   return (
     <div className="min-h-screen app-bg">
-      {/* Desktop push nav (transform-based) */}
+      {/* Desktop push nav (width-based) */}
       {isDesktop && (
         <DesktopNav
           expanded={desktopExpanded}
@@ -53,9 +51,9 @@ export default function LayoutShell({ route, session, onLogout, children }) {
       {!isDesktop && <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />}
 
       <motion.main
-        className="min-h-screen"
+        className="min-h-screen relative"
         initial={false}
-        animate={{ paddingLeft: isDesktop ? RAIL : 0, x: isDesktop && desktopExpanded ? SHIFT : 0 }}
+        animate={{ paddingLeft: contentPaddingLeft }}
         transition={{ type: 'spring', stiffness: 320, damping: 40 }}
       >
         <div className={`${!isDesktop ? 'pt-14 pb-16' : 'pb-0'}`}>
