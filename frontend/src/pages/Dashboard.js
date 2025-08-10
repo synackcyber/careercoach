@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { PlusIcon, FunnelIcon, MagnifyingGlassIcon, CogIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon, CogIcon } from '@heroicons/react/24/outline';
+import { motion } from 'framer-motion';
 import { useGoals } from '../hooks/useGoals';
 import GoalCard from '../components/GoalCard';
 import SimpleGoalForm from '../components/SimpleGoalForm';
@@ -9,6 +10,7 @@ import AISettings from '../components/AISettings';
 const Dashboard = () => {
   const [filters, setFilters] = useState({});
   const [searchTerm, setSearchTerm] = useState('');
+  const [searchFocused, setSearchFocused] = useState(false);
   const [showGoalForm, setShowGoalForm] = useState(false);
   const [editingGoal, setEditingGoal] = useState(null);
   const [selectedGoal, setSelectedGoal] = useState(null);
@@ -57,12 +59,7 @@ const Dashboard = () => {
     setShowProgressModal(true);
   };
 
-  const handleFilterChange = (filterType, value) => {
-    setFilters(prev => ({
-      ...prev,
-      [filterType]: value === 'all' ? undefined : value
-    }));
-  };
+  // (Filters UI removed) Keep filters state to support future server filtering via useGoals
 
   const getGoalStats = () => {
     return {
@@ -137,46 +134,27 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Filters and Search */}
+      {/* Animated Search */}
       <div className="max-w-7xl mx-auto px-6 py-6">
-        <div className="flex flex-col sm:flex-row gap-4 mb-8">
-          <div className="flex-1 relative">
-            <MagnifyingGlassIcon className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+        <div className="mb-8 flex justify-center">
+          <motion.div
+            className="relative"
+            initial={false}
+            animate={{ width: (searchFocused || searchTerm) ? '100%' : '60%' }}
+            transition={{ type: 'spring', stiffness: 320, damping: 40 }}
+            style={{ minWidth: (searchFocused || searchTerm) ? undefined : 280 }}
+          >
+            <MagnifyingGlassIcon className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               placeholder="Search goals..."
               value={searchTerm}
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => setSearchFocused(false)}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="input-field pl-10"
+              className="input-field pl-10 w-full"
             />
-          </div>
-          
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <FunnelIcon className="w-5 h-5 text-gray-400" />
-              <select
-                value={filters.status || 'all'}
-                onChange={(e) => handleFilterChange('status', e.target.value)}
-                className="input-field min-w-[120px]"
-              >
-                <option value="all">All Status</option>
-                <option value="active">Active</option>
-                <option value="completed">Completed</option>
-                <option value="paused">Paused</option>
-              </select>
-            </div>
-            
-            <select
-              value={filters.priority || 'all'}
-              onChange={(e) => handleFilterChange('priority', e.target.value)}
-              className="input-field min-w-[120px]"
-            >
-              <option value="all">All Priority</option>
-              <option value="high">High</option>
-              <option value="medium">Medium</option>
-              <option value="low">Low</option>
-            </select>
-          </div>
+          </motion.div>
         </div>
 
         {/* Goals Grid */}
