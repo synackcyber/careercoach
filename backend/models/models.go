@@ -130,3 +130,70 @@ type GoalSuggestion struct {
 	UpdatedAt        time.Time      `json:"updated_at"`
 }
 
+// Ingestion models
+type JobSource struct {
+    ID        uint      `json:"id" gorm:"primaryKey"`
+    Name      string    `json:"name" gorm:"uniqueIndex"`
+    Type      string    `json:"type"` // greenhouse | lever | jsonld
+    BaseURL   string    `json:"base_url"`
+    Active    bool      `json:"active"`
+    CreatedAt time.Time `json:"created_at"`
+    UpdatedAt time.Time `json:"updated_at"`
+}
+
+type JobPosting struct {
+    ID          uint      `json:"id" gorm:"primaryKey"`
+    SourceID    uint      `json:"source_id" gorm:"index;uniqueIndex:uniq_src_ext"`
+    Source      JobSource `json:"source" gorm:"foreignKey:SourceID"`
+    ExternalID  string    `json:"external_id" gorm:"index;uniqueIndex:uniq_src_ext"`
+    Company     string    `json:"company"`
+    Title       string    `json:"title"`
+    Seniority   string    `json:"seniority"`
+    EmploymentType string `json:"employment_type"`
+    Location    string    `json:"location"`
+    Remote      bool      `json:"remote"`
+    URL         string    `json:"url"`
+    DescriptionText string `json:"description_text"`
+    Responsibilities string `json:"responsibilities"` // JSON array
+    Requirements     string `json:"requirements"`     // JSON array
+    Qualifications   string `json:"qualifications"`   // JSON array
+    SkillsExtracted  string `json:"skills_extracted"` // JSON array
+    ToolsExtracted   string `json:"tools_extracted"`  // JSON array
+    YearsExperienceMin *int  `json:"years_experience_min"`
+    YearsExperienceMax *int  `json:"years_experience_max"`
+    EducationRequirements string `json:"education_requirements"`
+    DatePosted   *time.Time `json:"date_posted"`
+    ValidThrough *time.Time `json:"valid_through"`
+    Hash        string    `json:"hash" gorm:"uniqueIndex"`
+    FetchedAt   time.Time `json:"fetched_at"`
+    CreatedAt   time.Time `json:"created_at"`
+    UpdatedAt   time.Time `json:"updated_at"`
+}
+
+type Term struct {
+    ID              uint      `json:"id" gorm:"primaryKey"`
+    Text            string    `json:"text" gorm:"index"`
+    NormalizedText  string    `json:"normalized_text" gorm:"index"`
+    Type            string    `json:"type"` // responsibility | skill | tool
+    CreatedAt       time.Time `json:"created_at"`
+    UpdatedAt       time.Time `json:"updated_at"`
+}
+
+type PostingTerm struct {
+    PostingID uint      `json:"posting_id" gorm:"primaryKey;autoIncrement:false"`
+    TermID    uint      `json:"term_id" gorm:"primaryKey;autoIncrement:false"`
+    TF        float64   `json:"tf"`
+    TFIDF     float64   `json:"tfidf"`
+    FirstSeen time.Time `json:"first_seen_at"`
+}
+
+type RoleSignal struct {
+    ID         uint      `json:"id" gorm:"primaryKey"`
+    RoleTitle  string    `json:"role_title" gorm:"index"`
+    Seniority  string    `json:"seniority" gorm:"index"`
+    TermID     uint      `json:"term_id" gorm:"index"`
+    Weight     float64   `json:"weight"`
+    Window     string    `json:"window"`
+    UpdatedAt  time.Time `json:"updated_at"`
+}
+

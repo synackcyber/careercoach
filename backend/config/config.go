@@ -25,6 +25,15 @@ type Config struct {
     JWKSURL       string
     SupabaseAnonKey string
     SupabaseJWTSecret string
+
+    // Ingestion
+    IngestEnabled bool
+    IngestCron    string
+    IngestSourcesJSON string
+    IngestObeyRobots  bool
+    IngestRatePerHost int
+    BotContactEmail   string
+    AdminUserIDs      string // comma-separated allowlist
 }
 
 func Load() *Config {
@@ -47,6 +56,14 @@ func Load() *Config {
         JWKSURL:       getEnvOrDefault("JWKS_URL", ""),
         SupabaseAnonKey: getEnvOrDefault("SUPABASE_ANON_KEY", ""),
         SupabaseJWTSecret: getEnvOrDefault("SUPABASE_JWT_SECRET", ""),
+
+        IngestEnabled: getEnvOrDefault("INGEST_ENABLED", "false") == "true",
+        IngestCron: getEnvOrDefault("INGEST_CRON", "0 3 * * 1"),
+        IngestSourcesJSON: getEnvOrDefault("INGEST_SOURCES_JSON", "[]"),
+        IngestObeyRobots: getEnvOrDefault("INGEST_OBEY_ROBOTS", "true") == "true",
+        IngestRatePerHost: atoiDefault(getEnvOrDefault("INGEST_RATE_PER_HOST", "1"), 1),
+        BotContactEmail: getEnvOrDefault("BOT_CONTACT_EMAIL", "admin@example.com"),
+        AdminUserIDs: getEnvOrDefault("ADMIN_USER_IDS", ""),
 	}
 	
 	// Safe debug logging
@@ -74,4 +91,13 @@ func getEnvOrDefault(key, defaultValue string) string {
 		return value
 	}
 	return defaultValue
+}
+
+func atoiDefault(s string, def int) int {
+    var n int
+    _, err := fmt.Sscan(s, &n)
+    if err != nil {
+        return def
+    }
+    return n
 }

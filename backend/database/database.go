@@ -35,6 +35,11 @@ func Connect(cfg *config.Config) {
 		&models.UserProfile{},
 		&models.AIGoalSuggestion{},
 		&models.LearningInsight{},
+		&models.JobSource{},
+		&models.JobPosting{},
+		&models.Term{},
+		&models.PostingTerm{},
+		&models.RoleSignal{},
 	)
 	if err != nil {
 		log.Fatal("Failed to migrate database:", err)
