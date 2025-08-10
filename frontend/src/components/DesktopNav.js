@@ -60,7 +60,7 @@ export default function DesktopNav({ expanded, onToggle, route }) {
             onClick={onNewGoal}
             className={`w-full flex items-center ${expanded ? 'gap-3 px-3' : 'gap-0 px-0'} py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-800`}
           >
-            <span className="w-6 h-6 aspect-square inline-flex items-center justify-center shrink-0 rounded-full bg-accent-600 text-white text-[12px] leading-none select-none">+</span>
+            <span className="w-6 h-6 aspect-square inline-flex items-center justify-center shrink-0 rounded-full bg-gradient-to-b from-accent-500 to-accent-600 text-white text-[12px] leading-none select-none ring-1 ring-black/10 shadow-md shadow-accent-600/25">+</span>
             <motion.span
               initial={false}
               animate={{ opacity: expanded ? 1 : 0, x: expanded ? 0 : -6 }}
