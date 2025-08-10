@@ -89,7 +89,7 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-zinc-950/40">
+    <div className="min-h-screen app-bg">
       {/* Header card */}
       <div className="px-6 pt-6">
         <div className="max-w-7xl mx-auto">
