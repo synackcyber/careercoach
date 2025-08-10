@@ -7,9 +7,7 @@ import Login from './auth/Login';
 import Callback from './auth/Callback';
 import { onAuthStateChange, signOut } from './supabase/authClient';
 import { supabase } from './supabase/authClient';
-import Header from './components/Header';
-import Sidebar from './components/Sidebar';
-import MiniRail from './components/MiniRail';
+import LayoutShell from './components/LayoutShell';
 import './index.css';
 
 function parseTokensFromHash() {
@@ -26,7 +24,6 @@ function parseTokensFromHash() {
 function App() {
   const [route, setRoute] = useState(window.location.hash || '#/');
   const [session, setSession] = useState(null);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     const maybeSetSession = async () => {
@@ -80,14 +77,9 @@ function App() {
   };
 
   return (
-    <div className="App">
-      <MiniRail onOpenSidebar={() => setSidebarOpen(true)} route={route} open={sidebarOpen} />
-      <div className="pl-14">
-        <Header onToggleSidebar={() => setSidebarOpen(true)} onLogout={handleLogout} session={session} />
-        <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        <main>{renderContent()}</main>
-      </div>
-    </div>
+    <LayoutShell route={route} session={session} onLogout={handleLogout}>
+      {renderContent()}
+    </LayoutShell>
   );
 }
 

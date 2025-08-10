@@ -1,5 +1,6 @@
 import React from 'react';
 import LogoMark from './LogoMark';
+import { navItems } from '../nav/items';
 
 function RailButton({ title, onClick, children, active }) {
   return (
@@ -24,24 +25,20 @@ export default function MiniRail({ onOpenSidebar, route, open = false }) {
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
       </RailButton>
 
-      <RailButton title="Dashboard" onClick={navTo('#/')} active={route === '#/'}> 
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-      </RailButton>
-
-      <RailButton title="New Goal" onClick={navTo('#/')}>
-        <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-accent-600 text-white text-lg leading-none">+</span>
-      </RailButton>
-
-      <RailButton title="Timeline" onClick={navTo('#/timeline')} active={route === '#/timeline'}>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 6H3"/><path d="M21 12H8"/><path d="M21 18H13"/></svg>
-      </RailButton>
-
-      <RailButton title="Suggestions" onClick={navTo('#/')}>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/></svg>
-      </RailButton>
+      {navItems.map(item => (
+        <RailButton key={item.key} title={item.title} onClick={navTo(item.hash)} active={route === item.hash}>
+          {item.icon('')}
+        </RailButton>
+      ))}
 
       <div className="mt-auto mb-4">
-        <div className="h-8 w-8 rounded-full bg-zinc-200 text-zinc-700 flex items-center justify-center text-xs font-semibold">M</div>
+        <button
+          title="Profile"
+          onClick={navTo('#/profile')}
+          className="h-8 w-8 rounded-full bg-zinc-200 text-zinc-700 flex items-center justify-center text-xs font-semibold hover:bg-zinc-300 transition-colors"
+        >
+          M
+        </button>
       </div>
     </div>
   );
