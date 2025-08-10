@@ -1,0 +1,269 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: Inter, system-ui, sans-serif;
+  }
+  
+  body {
+    @apply text-gray-800 bg-surface-50 dark:bg-zinc-950 dark:text-zinc-200;
+  }
+}
+
+@layer components {
+  /* Unified card style with subtle gradient hairline and glass effect */
+  .card {
+    @apply rounded-soft bg-white/80 dark:bg-zinc-900/60 shadow-card ring-1 ring-black/5 backdrop-blur p-6 transition-shadow duration-300 hover:shadow-lg;
+    position: relative;
+  }
+  
+  /* Modal panels: force light UI for readability and consistency */
+  .modal-panel {
+    @apply bg-white text-gray-900;
+  }
+  .dark .modal-panel { @apply bg-white text-gray-900; }
+  .modal-panel .input-field {
+    @apply bg-white text-gray-900 border-gray-300 focus:ring-accent-500 focus:border-accent-500 dark:bg-white dark:text-gray-900 dark:border-gray-300;
+  }
+  /* Modal secondary button styled like wireframe, without referencing .btn-wire to avoid circular apply */
+  .modal-panel .btn-secondary {
+    @apply inline-flex items-center justify-center px-5 py-2.5 rounded-xl font-medium border border-zinc-900/20 text-gray-900 bg-white shadow-[inset_0_0_0_1px_rgba(0,0,0,0.04)] hover:bg-zinc-900/5 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2;
+  }
+  .dark .modal-panel .btn-secondary { @apply text-gray-900 border-zinc-900/20 bg-white hover:bg-zinc-900/5; }
+  /* Force readable button styles inside light modals even in dark mode */
+  .modal-panel .btn-wire-accent {
+    @apply text-accent-800 border-accent-700 bg-white hover:bg-accent-100;
+  }
+  .dark .modal-panel .btn-wire-accent { @apply text-accent-800 border-accent-700 bg-white hover:bg-accent-100; }
+  .modal-panel .btn-ghost { @apply text-gray-700 hover:bg-gray-100; }
+  .dark .modal-panel .btn-ghost { @apply text-gray-700 hover:bg-gray-100; }
+  /* Opaque card variant for use inside modals (prevents overlay bleed-through) */
+  .card-solid {
+    /* Always light for readability, even in dark mode */
+    @apply rounded-soft bg-white text-gray-900 shadow-card ring-1 ring-black/5 p-6 dark:bg-white dark:text-gray-900;
+    position: relative;
+  }
+  .card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 14px; /* match rounded-soft */
+    padding: 1px;
+    /* Warm rim light: slightly darker copper */
+    background: linear-gradient(180deg, rgba(148,99,58,.38), rgba(177,129,78,0.20) 35%, rgba(255,255,255,0));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  .btn-primary {
+    @apply bg-accent-600 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-accent-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 dark:focus:ring-offset-zinc-900;
+  }
+
+  /* Subtle CTA: flat copper, gradient only on hover */
+  .btn-cta {
+    @apply bg-accent-600 text-white px-6 py-2.5 rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 dark:focus:ring-offset-zinc-900 shadow-sm;
+    background-image: none;
+  }
+  .btn-cta:hover {
+    background-image: linear-gradient(135deg, #7a512f 0%, #94633a 65%, rgba(217,160,102,0.40) 100%);
+    box-shadow: 0 6px 16px rgba(148,99,58,0.14);
+  }
+  
+  .btn-secondary {
+    @apply bg-white/90 dark:bg-zinc-800 text-gray-700 dark:text-zinc-200 px-6 py-2.5 rounded-lg font-medium border border-gray-300/70 dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 dark:focus:ring-offset-zinc-900;
+  }
+  
+  .btn-ghost {
+    @apply text-gray-600 dark:text-zinc-300 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 dark:focus:ring-offset-zinc-900;
+  }
+  .btn-ghost:hover {
+    color: #94633a; /* accent-600 */
+  }
+  
+  /* Wireframe buttons */
+  .btn-wire {
+    @apply inline-flex items-center justify-center px-5 py-2.5 rounded-xl font-medium border border-zinc-900/20 text-gray-900 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.04)] hover:bg-zinc-900/5 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 dark:focus:ring-offset-zinc-900;
+  }
+  .dark .btn-wire { @apply border-zinc-600 text-zinc-100 hover:bg-white/5; }
+
+  .btn-wire-accent {
+    @apply inline-flex items-center justify-center px-5 py-2.5 rounded-xl font-medium border border-accent-700 text-accent-800 hover:bg-accent-100 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 dark:focus:ring-offset-zinc-900;
+  }
+  .dark .btn-wire-accent { @apply text-accent-300 hover:bg-accent-900/20; }
+
+  .btn-wire-sm { @apply px-4 py-2 rounded-lg text-sm; }
+  .btn-wire-lg { @apply px-6 py-3 rounded-2xl text-base; }
+  .btn-wire > svg, .btn-wire-accent > svg { @apply w-5 h-5 -ml-0.5 mr-2; }
+  .btn-wire:active, .btn-wire-accent:active { transform: translateY(0.5px); }
+  .btn-wire[disabled], .btn-wire-accent[disabled] { @apply opacity-50 cursor-not-allowed; }
+
+  /* Icon-only button for toolbars/toggles */
+  .btn-icon {
+    @apply inline-flex items-center justify-center h-9 w-9 rounded-xl border text-gray-900 dark:text-zinc-100
+           border-zinc-900/15 dark:border-zinc-600 bg-white/90 dark:bg-zinc-800
+           hover:bg-zinc-900/5 dark:hover:bg-white/5 transition-colors duration-200
+           focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 dark:focus:ring-offset-zinc-900;
+  }
+  .btn-icon > svg { @apply w-5 h-5 m-0; }
+
+  /* Timeline aesthetics */
+  .scroll-mask {
+    position: relative;
+  }
+  .scroll-mask::before,
+  .scroll-mask::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 48px;
+    pointer-events: none;
+    z-index: 5;
+  }
+  .scroll-mask::before {
+    left: 0;
+    background: linear-gradient(to right, rgba(250,247,242,1), rgba(250,247,242,0));
+  }
+  .dark .scroll-mask::before {
+    background: linear-gradient(to right, rgba(10,10,10,1), rgba(10,10,10,0));
+  }
+  .scroll-mask::after {
+    right: 0;
+    background: linear-gradient(to left, rgba(250,247,242,1), rgba(250,247,242,0));
+  }
+  .dark .scroll-mask::after {
+    background: linear-gradient(to left, rgba(10,10,10,1), rgba(10,10,10,0));
+  }
+
+  .today-glow {
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.04), 0 0 0 2px rgba(185,122,67,0.08), 0 0 18px rgba(185,122,67,0.18);
+  }
+
+  .goal-chip {
+    @apply rounded-full text-white text-xs px-3 h-8 inline-flex items-center shadow;
+    transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+    will-change: transform;
+  }
+  .goal-chip:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
+  .goal-chip:active { transform: translateY(0px) scale(0.99); }
+
+  /* Hide scrollbars utility */
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+  /* Subtle separator grids for timelines */
+  .timeline-grid-x {
+    --gap: 40px;          /* minor tick spacing (overridden inline) */
+    --gap-major: 280px;   /* major tick spacing (overridden inline) */
+    background-image:
+      repeating-linear-gradient(to right,
+        rgba(0,0,0,0.06) 0 1px, transparent 1px var(--gap)),
+      repeating-linear-gradient(to right,
+        rgba(0,0,0,0.10) 0 1px, transparent 1px var(--gap-major));
+    background-blend-mode: multiply;
+  }
+  .dark .timeline-grid-x {
+    background-image:
+      repeating-linear-gradient(to right,
+        rgba(255,255,255,0.06) 0 1px, transparent 1px var(--gap)),
+      repeating-linear-gradient(to right,
+        rgba(255,255,255,0.10) 0 1px, transparent 1px var(--gap-major));
+  }
+
+  .timeline-grid-y {
+    --gap: 56px;          /* row height */
+    --gap-major: 224px;   /* stronger every 4 rows */
+    background-image:
+      repeating-linear-gradient(to bottom,
+        rgba(0,0,0,0.05) 0 1px, transparent 1px var(--gap)),
+      repeating-linear-gradient(to bottom,
+        rgba(0,0,0,0.08) 0 1px, transparent 1px var(--gap-major));
+    background-blend-mode: multiply;
+  }
+  .dark .timeline-grid-y {
+    background-image:
+      repeating-linear-gradient(to bottom,
+        rgba(255,255,255,0.06) 0 1px, transparent 1px var(--gap)),
+      repeating-linear-gradient(to bottom,
+        rgba(255,255,255,0.10) 0 1px, transparent 1px var(--gap-major));
+  }
+  
+  .input-field {
+    @apply w-full px-4 py-2.5 border border-gray-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100 focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-colors duration-200 outline-none;
+  }
+  .input-field:focus {
+    box-shadow: 0 0 0 3px rgba(185,129,78,0.12); /* subtle copper glow */
+  }
+  
+  .status-badge {
+    @apply px-3 py-1 rounded-full text-xs font-medium ring-1 ring-inset;
+  }
+  
+  .status-active {
+    @apply bg-green-100 text-green-800 ring-green-200 dark:bg-green-900/30 dark:text-green-300 dark:ring-green-800;
+  }
+  
+  .status-completed {
+    @apply bg-accent-100 text-accent-800 ring-accent-200 dark:bg-accent-900/30 dark:text-accent-300 dark:ring-accent-800;
+  }
+  
+  .status-paused {
+    @apply bg-yellow-100 text-yellow-800 ring-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300 dark:ring-yellow-800;
+  }
+  
+  .priority-high {
+    @apply bg-red-100 text-red-800 ring-red-200 dark:bg-red-900/30 dark:text-red-300 dark:ring-red-800;
+  }
+  
+  .priority-medium {
+    @apply bg-yellow-100 text-yellow-800 ring-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300 dark:ring-yellow-800;
+  }
+  
+  .priority-low {
+    @apply bg-gray-100 text-gray-800 ring-gray-200 dark:bg-zinc-800/60 dark:text-zinc-200 dark:ring-zinc-700;
+  }
+}
+
+/* Background aesthetic helpers */
+.app-bg {
+  /* Warm sand background with subtle copper glow */
+  --enter-distance: 14px;
+  background-image:
+    radial-gradient(ellipse 120% 80% at 50% -20%, rgba(197,179,159,0.30), rgba(255,255,255,0)),
+    radial-gradient(circle at 80% 10%, rgba(185,129,78,0.08), rgba(255,255,255,0) 40%),
+    linear-gradient(180deg, #faf7f2, #f6f2ea);
+}
+.dark .app-bg {
+  --enter-distance: 14px;
+  background-image:
+    radial-gradient(ellipse 120% 80% at 50% -20%, rgba(148,99,58,0.16), rgba(0,0,0,0)),
+    radial-gradient(circle at 80% 10%, rgba(185,129,78,0.12), rgba(0,0,0,0) 40%),
+    linear-gradient(180deg, #0a0a0a, #0f1115);
+}
+.reduce-motion .app-bg { --enter-distance: 0px; }
+
+@media (max-width: 640px) {
+  .app-bg { --enter-distance: 10px; }
+  .dark .app-bg { --enter-distance: 10px; }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.reduce-motion * {
+  animation: none !important;
+  transition-duration: 0ms !important;
+  scroll-behavior: auto !important;
+}
