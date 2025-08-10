@@ -10,5 +10,4 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/lestrrat-go/jwx/v2 v2.1.6
-	github.com/robfig/cron/v3 v3.0.1
 )
