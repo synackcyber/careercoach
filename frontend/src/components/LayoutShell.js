@@ -1,18 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import Sidebar from './Sidebar';
-import MiniRail from './MiniRail';
 import BottomNav from './BottomNav';
 import { useMediaQuery } from '../hooks/useMediaQuery';
-import DesktopNav, { getDesktopNavWidth } from './DesktopNav';
+import DesktopNav from './DesktopNav';
 import { motion } from 'framer-motion';
+
+const RAIL = 56; // collapsed rail width
+const PANEL = 320; // full drawer width
+const SHIFT = PANEL - RAIL; // content shift when expanded
 
 export default function LayoutShell({ route, session, onLogout, children }) {
   const isDesktop = useMediaQuery('(min-width: 1024px)');
   const isTablet = useMediaQuery('(min-width: 640px)');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [desktopExpanded, setDesktopExpanded] = useState(false);
-
-  const contentLeft = isDesktop ? getDesktopNavWidth(desktopExpanded) : 0;
 
   // Apply saved preferences for theme and motion
   useEffect(() => {
@@ -28,9 +29,13 @@ export default function LayoutShell({ route, session, onLogout, children }) {
 
   return (
     <div className="min-h-screen app-bg">
-      {/* Desktop push nav */}
+      {/* Desktop push nav (transform-based) */}
       {isDesktop && (
-        <DesktopNav expanded={desktopExpanded} onToggle={() => setDesktopExpanded(v => !v)} route={route} />
+        <DesktopNav
+          expanded={desktopExpanded}
+          onToggle={() => setDesktopExpanded(v => !v)}
+          route={route}
+        />
       )}
 
       {/* Tablet/Mobile hamburger trigger */}
@@ -50,8 +55,8 @@ export default function LayoutShell({ route, session, onLogout, children }) {
       <motion.main
         className="min-h-screen"
         initial={false}
-        animate={{ paddingLeft: contentLeft }}
-        transition={{ type: 'spring', stiffness: 360, damping: 32 }}
+        animate={{ paddingLeft: isDesktop ? RAIL : 0, x: isDesktop && desktopExpanded ? SHIFT : 0 }}
+        transition={{ type: 'spring', stiffness: 320, damping: 40 }}
       >
         <div className={`${!isDesktop ? 'pt-14 pb-16' : 'pb-0'}`}>
           {children}
