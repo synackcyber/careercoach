@@ -92,44 +92,46 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-zinc-950/40">
+      {/* Header card */}
+      <div className="px-6 pt-6">
         <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Goal Tracker</h1>
-              <p className="text-gray-600 mt-1">Track your personal and professional goals</p>
+          <div className="rounded-2xl ring-1 ring-black/5 shadow-card bg-white/85 dark:bg-zinc-900/70 backdrop-blur px-6 py-6">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-zinc-100">Goal Tracker</h1>
+                <p className="text-gray-600 dark:text-zinc-300 mt-1">Track your personal and professional goals</p>
+              </div>
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={() => setShowAISettings(true)}
+                  className="btn-secondary flex items-center space-x-2"
+                  title="Configure AI Settings"
+                >
+                  <CogIcon className="w-5 h-5" />
+                  <span>AI Settings</span>
+                </button>
+              </div>
             </div>
-          <div className="flex items-center space-x-3">
-            <button
-              onClick={() => setShowAISettings(true)}
-              className="btn-secondary flex items-center space-x-2"
-              title="Configure AI Settings"
-            >
-              <CogIcon className="w-5 h-5" />
-              <span>AI Settings</span>
-            </button>
-          </div>
-          </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <div className="bg-gray-50 rounded-xl p-4">
-              <p className="text-sm font-medium text-gray-600">Total Goals</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{stats.total}</p>
-            </div>
-            <div className="bg-green-50 rounded-xl p-4">
-              <p className="text-sm font-medium text-green-600">Active</p>
-              <p className="text-2xl font-bold text-green-700 mt-1">{stats.active}</p>
-            </div>
-            <div className="bg-blue-50 rounded-xl p-4">
-              <p className="text-sm font-medium text-blue-600">Completed</p>
-              <p className="text-2xl font-bold text-blue-700 mt-1">{stats.completed}</p>
-            </div>
-            <div className="bg-yellow-50 rounded-xl p-4">
-              <p className="text-sm font-medium text-yellow-600">Paused</p>
-              <p className="text-2xl font-bold text-yellow-700 mt-1">{stats.paused}</p>
+            {/* Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-gray-50 dark:bg-zinc-800/60 rounded-xl p-4">
+                <p className="text-sm font-medium text-gray-600 dark:text-zinc-300">Total Goals</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-zinc-100 mt-1">{stats.total}</p>
+              </div>
+              <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-4">
+                <p className="text-sm font-medium text-green-700 dark:text-green-300">Active</p>
+                <p className="text-2xl font-bold text-green-700 dark:text-green-300 mt-1">{stats.active}</p>
+              </div>
+              <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4">
+                <p className="text-sm font-medium text-blue-700 dark:text-blue-300">Completed</p>
+                <p className="text-2xl font-bold text-blue-700 dark:text-blue-300 mt-1">{stats.completed}</p>
+              </div>
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-xl p-4">
+                <p className="text-sm font-medium text-yellow-700 dark:text-yellow-300">Paused</p>
+                <p className="text-2xl font-bold text-yellow-700 dark:text-yellow-300 mt-1">{stats.paused}</p>
+              </div>
             </div>
           </div>
         </div>
