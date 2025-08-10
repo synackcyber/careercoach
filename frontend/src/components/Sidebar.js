@@ -28,10 +28,8 @@ export default function Sidebar({ open, onClose }) {
               <div className="h-14 flex items-center px-4 border-b font-semibold">Workspace</div>
 
               <div className="px-3 pt-3">
-                <a href="#/" onClick={onNewGoal} className="flex items-center gap-3 px-3 h-10 py-0 rounded-xl bg-accent-50 text-accent-800">
-                  <span className="inline-flex h-8 w-8 items-center justify-center">
-                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-b from-accent-500 to-accent-600 text-white text-lg leading-none ring-1 ring-black/10 shadow-md shadow-accent-600/25">+</span>
-                  </span>
+                <a href="#/" onClick={onNewGoal} className="flex items-center gap-3 px-3 py-2 rounded-xl bg-accent-50 text-accent-800">
+                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-b from-accent-500 to-accent-600 text-white text-lg leading-none ring-1 ring-black/10 shadow-md shadow-accent-600/25">+</span>
                   <span className="font-medium">New goal</span>
                 </a>
               </div>

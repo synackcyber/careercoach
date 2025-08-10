@@ -58,11 +58,9 @@ export default function DesktopNav({ expanded, onToggle, route }) {
           {/* New goal lives here to keep icon order stable */}
           <button
             onClick={onNewGoal}
-            className={`w-full flex items-center ${expanded ? 'gap-3 px-3 justify-start' : 'px-0 justify-center'} h-10 py-0 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400`}
+            className={`w-full flex items-center ${expanded ? 'gap-3 px-3' : 'gap-0 px-0'} py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-800`}
           >
-            <span className="w-8 h-8 inline-flex items-center justify-center">
-              <span className="w-6 h-6 aspect-square inline-flex items-center justify-center shrink-0 rounded-full bg-gradient-to-b from-accent-500 to-accent-600 text-white text-[12px] leading-none select-none ring-1 ring-black/10 shadow-md shadow-accent-600/25">+</span>
-            </span>
+            <span className="w-6 h-6 aspect-square inline-flex items-center justify-center shrink-0 rounded-full bg-gradient-to-b from-accent-500 to-accent-600 text-white text-[12px] leading-none select-none ring-1 ring-black/10 shadow-md shadow-accent-600/25">+</span>
             <motion.span
               initial={false}
               animate={{ opacity: expanded ? 1 : 0, x: expanded ? 0 : -6 }}
