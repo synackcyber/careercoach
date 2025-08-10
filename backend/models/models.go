@@ -35,6 +35,7 @@ type Goal struct {
 	Status      string    `json:"status" gorm:"default:'active';check:status IN ('active','completed','paused')"`
 	Priority    string    `json:"priority" gorm:"default:'medium';check:priority IN ('low','medium','high')"`
 	DueDate     *time.Time `json:"due_date"`
+    Tags        string    `json:"tags"` // JSON array of strings
 	Progress    []Progress `json:"progress,omitempty" gorm:"foreignKey:GoalID"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`

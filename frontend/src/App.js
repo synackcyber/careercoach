@@ -3,6 +3,7 @@ import Dashboard from './pages/Dashboard';
 import Timeline from './pages/Timeline';
 import TimelineVertical from './pages/TimelineVertical';
 import Profile from './pages/Profile';
+import NewGoal from './pages/NewGoal';
 import Login from './auth/Login';
 import Callback from './auth/Callback';
 import { onAuthStateChange, signOut } from './supabase/authClient';
@@ -71,6 +72,8 @@ function App() {
         return <TimelineVertical />;
       case '#/profile':
         return <Profile />;
+      case '#/new-goal':
+        return <NewGoal />;
       default:
         return <Dashboard key={session ? 'authenticated' : 'unauthenticated'} />;
     }

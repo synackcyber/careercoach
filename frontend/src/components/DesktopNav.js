@@ -22,12 +22,7 @@ const asideVariants = {
 
 export default function DesktopNav({ expanded, onToggle, route }) {
   const navTo = (hash) => () => { window.location.hash = hash; };
-  const onNewGoal = () => {
-    try {
-      window.dispatchEvent(new Event('open-new-goal'));
-    } catch (_) {}
-    window.location.hash = '#/';
-  };
+  const onNewGoal = () => { window.location.hash = '#/new-goal'; };
 
   return (
     <motion.aside

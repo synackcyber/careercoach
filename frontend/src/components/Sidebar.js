@@ -13,14 +13,7 @@ const drawerVariants = { hidden: { x: -24, opacity: 0 }, visible: { x: 0, opacit
 
 export default function Sidebar({ open, onClose }) {
   const navTo = (hash) => (e) => { e.preventDefault(); window.location.hash = hash; onClose?.(); };
-  const onNewGoal = (e) => {
-    e.preventDefault();
-    try {
-      window.dispatchEvent(new Event('open-new-goal'));
-    } catch (_) {}
-    window.location.hash = '#/'
-    onClose?.();
-  };
+  const onNewGoal = (e) => { e.preventDefault(); window.location.hash = '#/new-goal'; onClose?.(); };
 
   return (
     <AnimatePresence>
