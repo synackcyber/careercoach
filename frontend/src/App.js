@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Dashboard from './pages/Dashboard';
-import Timeline from './pages/Timeline';
-import TimelineVertical from './pages/TimelineVertical';
+import TimelineView from './pages/TimelineView';
 import Profile from './pages/Profile';
 import NewGoal from './pages/NewGoal';
 import Login from './auth/Login';
@@ -67,9 +66,7 @@ function App() {
       case '#/':
         return <Dashboard key={session ? 'authenticated' : 'unauthenticated'} />;
       case '#/timeline':
-        return <Timeline />;
-      case '#/timeline-vertical':
-        return <TimelineVertical />;
+        return <TimelineView />;
       case '#/profile':
         return <Profile />;
       case '#/new-goal':
