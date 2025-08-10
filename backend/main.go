@@ -6,7 +6,6 @@ import (
     "goaltracker/database"
     "goaltracker/handlers"
     "goaltracker/middleware"
-    "goaltracker/services/ingest"
     "github.com/gin-gonic/gin"
     "github.com/gin-contrib/cors"
 )
@@ -97,22 +96,14 @@ func main() {
             userProfiles.PUT("/:id", handlers.UpdateUserProfile)
         }
 
-        // Admin-only routes
-        admin := authRequired.Group("/admin")
-        admin.Use(middleware.RequireAdmin())
-        {
-            admin.POST("/ingest/run", handlers.AdminIngestRun)
-            admin.GET("/ingest/status", handlers.AdminIngestStatus)
-            admin.GET("/ingest/sources", handlers.AdminIngestSources)
-        }
+        // Admin routes removed (ingestion disabled)
     }
 	
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})
 	})
 	
-    // Start weekly scheduler if enabled
-    ingest.StartScheduler()
+    // Ingestion scheduler removed for now
 
     log.Printf("Starting server on port %s", cfg.APIPort)
 	if err := r.Run(":" + cfg.APIPort); err != nil {

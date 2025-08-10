@@ -26,7 +26,8 @@ type Config struct {
     SupabaseAnonKey string
     SupabaseJWTSecret string
 
-    // Ingestion
+    // Ingestion (disabled)
+    // fields retained for future but unused
     IngestEnabled bool
     IngestCron    string
     IngestSourcesJSON string
