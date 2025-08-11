@@ -29,7 +29,11 @@ const api = axios.create({
 // Attach Authorization header if user is logged in
 api.interceptors.request.use(async (config) => {
   try {
-    const token = await getAccessToken();
+    // Avoid blocking requests indefinitely on auth; cap token retrieval time
+    const token = await Promise.race([
+      getAccessToken(),
+      new Promise((resolve) => setTimeout(() => resolve(null), 700)),
+    ]);
     if (token) {
       config.headers = config.headers || {};
       config.headers.Authorization = `Bearer ${token}`;
@@ -40,6 +44,21 @@ api.interceptors.request.use(async (config) => {
   try { console.debug('[api] request', config.method?.toUpperCase(), config.baseURL + (config.url || '')); } catch (_) {}
   return config;
 });
+
+// Log responses to help diagnose loading states
+api.interceptors.response.use(
+  (response) => {
+    try { console.debug('[api] response', response.status, response.config.method?.toUpperCase(), response.config.baseURL + (response.config.url || '')); } catch (_) {}
+    return response;
+  },
+  (error) => {
+    try {
+      const { response, config } = error || {};
+      console.error('[api] error', response?.status, config?.method?.toUpperCase(), (config?.baseURL || '') + (config?.url || ''), response?.data || error?.message);
+    } catch (_) {}
+    return Promise.reject(error);
+  }
+);
 
 // Core API endpoints
 export const jobRoleApi = {

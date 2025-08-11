@@ -19,7 +19,7 @@ export default function Profile() {
       if (!isMounted) return;
       setLoading(true);
       setError('');
-      const timeoutMs = 10000;
+      const timeoutMs = 15000;
       try {
         const result = await Promise.race([
           userProfileApi.getOrCreate(),
