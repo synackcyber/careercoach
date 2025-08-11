@@ -7,6 +7,7 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [profile, setProfile] = useState({ id: null, current_role: '', experience_level: 'mid', industry: '' });
+  const fromGate = !!localStorage.getItem('onboarding_gate');
 
   useEffect(() => {
     const load = async () => {
@@ -32,12 +33,17 @@ export default function Profile() {
     e.preventDefault();
     try {
       setError('');
+      if (!profile.current_role || !profile.experience_level || !profile.industry) {
+        setError('Please complete all required fields');
+        return;
+      }
       await userProfileApi.update(profile.id, {
         current_role: profile.current_role,
         experience_level: profile.experience_level,
         industry: profile.industry,
       });
-      alert('Profile saved');
+      localStorage.removeItem('onboarding_gate');
+      window.location.hash = '#/';
     } catch (e) {
       setError('Failed to save profile');
     }
@@ -47,22 +53,23 @@ export default function Profile() {
 
   return (
     <div className="p-6 max-w-xl">
+      {fromGate && <div className="mb-4 text-sm bg-yellow-50 text-yellow-800 rounded p-3">Complete your profile to continue.</div>}
       <h1 className="text-xl font-semibold mb-4">Your Profile</h1>
       {error && <div className="text-red-600 mb-3 text-sm">{error}</div>}
       <form className="space-y-4" onSubmit={onSave}>
         <div>
           <label className="block text-sm mb-1">Current Role</label>
-          <input className="input-field w-full" value={profile.current_role} onChange={(e) => setProfile({ ...profile, current_role: e.target.value })} />
+          <input className="input-field w-full" value={profile.current_role} onChange={(e) => setProfile({ ...profile, current_role: e.target.value })} required />
         </div>
         <div>
           <label className="block text-sm mb-1">Experience Level</label>
-          <select className="input-field w-full" value={profile.experience_level} onChange={(e) => setProfile({ ...profile, experience_level: e.target.value })}>
+          <select className="input-field w-full" value={profile.experience_level} onChange={(e) => setProfile({ ...profile, experience_level: e.target.value })} required>
             {experienceOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
           </select>
         </div>
         <div>
           <label className="block text-sm mb-1">Industry</label>
-          <input className="input-field w-full" value={profile.industry} onChange={(e) => setProfile({ ...profile, industry: e.target.value })} />
+          <input className="input-field w-full" value={profile.industry} onChange={(e) => setProfile({ ...profile, industry: e.target.value })} required />
         </div>
         <button className="btn-primary" type="submit">Save</button>
       </form>

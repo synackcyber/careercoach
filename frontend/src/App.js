@@ -9,6 +9,7 @@ import Callback from './auth/Callback';
 import { onAuthStateChange, signOut } from './supabase/authClient';
 import { supabase } from './supabase/authClient';
 import LayoutShell from './components/LayoutShell';
+import { userProfileApi } from './services/api';
 import './index.css';
 
 function parseTokensFromHash() {
@@ -25,6 +26,7 @@ function parseTokensFromHash() {
 function App() {
   const [route, setRoute] = useState(window.location.hash || '#/');
   const [session, setSession] = useState(null);
+  const [mustOnboard, setMustOnboard] = useState(false);
 
   useEffect(() => {
     const maybeSetSession = async () => {
@@ -45,7 +47,28 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const subscription = onAuthStateChange((s) => setSession(s));
+    const subscription = onAuthStateChange(async (s) => {
+      setSession(s);
+      if (s) {
+        try {
+          const { data } = await userProfileApi.getOrCreate();
+          const p = data?.data || {};
+          const missing = !p.current_role || !p.experience_level || !p.industry;
+          setMustOnboard(missing);
+          if (missing) {
+            localStorage.setItem('onboarding_gate', '1');
+            window.location.hash = '#/profile';
+          } else {
+            localStorage.removeItem('onboarding_gate');
+          }
+        } catch (_) {
+          setMustOnboard(false);
+        }
+      } else {
+        setMustOnboard(false);
+        localStorage.removeItem('onboarding_gate');
+      }
+    });
     return () => subscription?.unsubscribe?.();
   }, []);
 
@@ -61,6 +84,10 @@ function App() {
 
     if (!session) {
       return <Login />;
+    }
+
+    if (mustOnboard && route !== '#/profile') {
+      return <Profile />;
     }
 
     switch (route) {

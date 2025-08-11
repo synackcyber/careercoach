@@ -17,6 +17,20 @@ type AIGoalRequest struct {
 	CompanyContext     string             `json:"company_context,omitempty"`
 }
 
+type updateProfilePayload struct {
+    CurrentRole        *string `json:"current_role"`
+    ExperienceLevel    *string `json:"experience_level"`
+    Industry           *string `json:"industry"`
+    CompanySize        *string `json:"company_size,omitempty"`
+    LearningStyle      *string `json:"learning_style,omitempty"`
+    AvailableHoursWeek *int    `json:"available_hours_week,omitempty"`
+    CareerGoals        *string `json:"career_goals,omitempty"`
+    CurrentTools       *string `json:"current_tools,omitempty"`
+    SkillGaps          *string `json:"skill_gaps,omitempty"`
+}
+
+var expLevels = map[string]struct{}{ "entry":{}, "junior":{}, "mid":{}, "senior":{}, "lead":{}, "expert":{} }
+
 func GetAIGoalSuggestions(c *gin.Context) {
 	var req AIGoalRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -74,21 +88,33 @@ func GetOrCreateMyProfile(c *gin.Context) {
 }
 
 func CreateUserProfile(c *gin.Context) {
-	var profile models.UserProfile
-	if err := c.ShouldBindJSON(&profile); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	
-    // bind to authenticated user
+    var p updateProfilePayload
+    if err := c.ShouldBindJSON(&p); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
     userID, _ := middleware.GetUserID(c)
-    profile.UserID = userID
+    profile := models.UserProfile{UserID: userID}
+    if p.CurrentRole != nil { profile.CurrentRole = *p.CurrentRole }
+    if p.ExperienceLevel != nil {
+        if _, ok := expLevels[*p.ExperienceLevel]; !ok {
+            c.JSON(http.StatusBadRequest, gin.H{"error":"invalid experience_level"})
+            return
+        }
+        profile.ExperienceLevel = *p.ExperienceLevel
+    }
+    if p.Industry != nil { profile.Industry = *p.Industry }
+    if p.CompanySize != nil { profile.CompanySize = *p.CompanySize }
+    if p.LearningStyle != nil { profile.LearningStyle = *p.LearningStyle }
+    if p.AvailableHoursWeek != nil { profile.AvailableHoursWeek = *p.AvailableHoursWeek }
+    if p.CareerGoals != nil { profile.CareerGoals = *p.CareerGoals }
+    if p.CurrentTools != nil { profile.CurrentTools = *p.CurrentTools }
+    if p.SkillGaps != nil { profile.SkillGaps = *p.SkillGaps }
     if err := database.DB.Create(&profile).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user profile"})
-		return
-	}
-	
-	c.JSON(http.StatusCreated, gin.H{"data": profile})
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user profile"})
+        return
+    }
+    c.JSON(http.StatusCreated, gin.H{"data": profile})
 }
 
 func GetUserProfile(c *gin.Context) {
@@ -105,28 +131,39 @@ func GetUserProfile(c *gin.Context) {
 }
 
 func UpdateUserProfile(c *gin.Context) {
-	id := c.Param("id")
-	var profile models.UserProfile
-	
+    id := c.Param("id")
+    var profile models.UserProfile
     userID, _ := middleware.GetUserID(c)
     if err := database.DB.Where("user_id = ?", userID).First(&profile, id).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User profile not found"})
-		return
-	}
-	
-	if err := c.ShouldBindJSON(&profile); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	
-    // enforce ownership
+        c.JSON(http.StatusNotFound, gin.H{"error": "User profile not found"})
+        return
+    }
+    var p updateProfilePayload
+    if err := c.ShouldBindJSON(&p); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
+    if p.CurrentRole != nil { profile.CurrentRole = *p.CurrentRole }
+    if p.ExperienceLevel != nil {
+        if _, ok := expLevels[*p.ExperienceLevel]; !ok {
+            c.JSON(http.StatusBadRequest, gin.H{"error":"invalid experience_level"})
+            return
+        }
+        profile.ExperienceLevel = *p.ExperienceLevel
+    }
+    if p.Industry != nil { profile.Industry = *p.Industry }
+    if p.CompanySize != nil { profile.CompanySize = *p.CompanySize }
+    if p.LearningStyle != nil { profile.LearningStyle = *p.LearningStyle }
+    if p.AvailableHoursWeek != nil { profile.AvailableHoursWeek = *p.AvailableHoursWeek }
+    if p.CareerGoals != nil { profile.CareerGoals = *p.CareerGoals }
+    if p.CurrentTools != nil { profile.CurrentTools = *p.CurrentTools }
+    if p.SkillGaps != nil { profile.SkillGaps = *p.SkillGaps }
     profile.UserID = userID
     if err := database.DB.Save(&profile).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user profile"})
-		return
-	}
-	
-	c.JSON(http.StatusOK, gin.H{"data": profile})
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user profile"})
+        return
+    }
+    c.JSON(http.StatusOK, gin.H{"data": profile})
 }
 
 func GetAIInsights(c *gin.Context) {
