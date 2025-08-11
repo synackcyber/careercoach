@@ -25,6 +25,9 @@ type Config struct {
     JWKSURL       string
     SupabaseAnonKey string
     SupabaseJWTSecret string
+
+    // Admin allowlist (comma-separated Supabase user IDs)
+    AdminUserIDs string
 }
 
 func Load() *Config {
@@ -47,6 +50,7 @@ func Load() *Config {
         JWKSURL:       getEnvOrDefault("JWKS_URL", ""),
         SupabaseAnonKey: getEnvOrDefault("SUPABASE_ANON_KEY", ""),
         SupabaseJWTSecret: getEnvOrDefault("SUPABASE_JWT_SECRET", ""),
+        AdminUserIDs: getEnvOrDefault("ADMIN_USER_IDS", ""),
 	}
 	
 	// Safe debug logging

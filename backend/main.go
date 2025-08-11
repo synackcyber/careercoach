@@ -96,7 +96,13 @@ func main() {
             userProfiles.PUT("/:id", handlers.UpdateUserProfile)
         }
 
-        // Admin routes removed (ingestion disabled)
+        // Admin: system health and users (read-only)
+        admin := authRequired.Group("/admin")
+        admin.Use(middleware.RequireAdmin())
+        {
+            admin.GET("/health", handlers.AdminHealth)
+            admin.GET("/users", handlers.AdminUsers)
+        }
     }
 	
 	r.GET("/health", func(c *gin.Context) {

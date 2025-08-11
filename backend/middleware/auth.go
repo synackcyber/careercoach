@@ -65,7 +65,29 @@ func RequireAuth() gin.HandlerFunc {
 }
 
 // RequireAdmin checks if authenticated user is in the ADMIN_USER_IDS allowlist
-// RequireAdmin removed for now (no admin-only routes)
+// RequireAdmin checks if authenticated user is in the ADMIN_USER_IDS allowlist
+func RequireAdmin() gin.HandlerFunc {
+    cfg := config.Load()
+    allow := map[string]struct{}{}
+    if cfg.AdminUserIDs != "" {
+        for _, id := range strings.Split(cfg.AdminUserIDs, ",") {
+            id = strings.TrimSpace(id)
+            if id != "" { allow[id] = struct{}{} }
+        }
+    }
+    return func(c *gin.Context) {
+        uid, err := GetUserID(c)
+        if err != nil {
+            c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "admin only"})
+            return
+        }
+        if _, ok := allow[uid]; !ok {
+            c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "admin only"})
+            return
+        }
+        c.Next()
+    }
+}
 
 // Helper function for min
 func min(a, b int) int {
