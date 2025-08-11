@@ -17,8 +17,10 @@ func main() {
 	
 	database.Connect(cfg)
 	
-	r := gin.New()
-	r.Use(gin.Recovery())
+    r := gin.New()
+    // Log requests for debugging; keep in production for now (can be toggled with mode if needed)
+    r.Use(gin.Logger())
+    r.Use(gin.Recovery())
 
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{cfg.FrontendURL},

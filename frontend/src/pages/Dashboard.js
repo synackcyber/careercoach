@@ -170,7 +170,9 @@ const Dashboard = () => {
                 : 'Create your first goal to get started on your journey'
               }
             </p>
-            {!searchTerm && null}
+            {!searchTerm && (
+              <button className="btn-primary" onClick={() => setShowGoalForm(true)}>Create a goal</button>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

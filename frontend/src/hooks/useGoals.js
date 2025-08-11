@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { goalApi } from '../services/api';
-import { getAccessToken } from '../supabase/authClient';
+import { getAccessToken, onAuthStateChange } from '../supabase/authClient';
 
 export const useGoals = (filters = {}) => {
   const [goals, setGoals] = useState([]);
@@ -80,6 +80,17 @@ export const useGoals = (filters = {}) => {
     checkAuthAndFetch();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(filters)]);
+
+  // Refetch when auth session changes (e.g., after magic link completes)
+  useEffect(() => {
+    const sub = onAuthStateChange(async (session) => {
+      if (session) {
+        fetchGoals();
+      }
+    });
+    return () => sub?.unsubscribe?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return {
     goals,
