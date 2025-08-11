@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { userProfileApi } from '../services/api';
+import { getAccessToken, onAuthStateChange } from '../supabase/authClient';
 
 const experienceOptions = ['entry','junior','mid','senior','lead','expert'];
 
@@ -10,10 +11,21 @@ export default function Profile() {
   const fromGate = !!localStorage.getItem('onboarding_gate');
 
   useEffect(() => {
-    const load = async () => {
+    let isMounted = true;
+    let subscription;
+
+    const fetchWithTimeout = async () => {
+      if (!isMounted) return;
+      setLoading(true);
+      setError('');
+      const timeoutMs = 10000;
       try {
-        const { data } = await userProfileApi.getOrCreate();
-        const p = data.data || {};
+        const result = await Promise.race([
+          userProfileApi.getOrCreate(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), timeoutMs)),
+        ]);
+        if (!isMounted) return;
+        const p = result?.data?.data || {};
         setProfile({
           id: p.id,
           current_role: p.current_role || '',
@@ -21,12 +33,33 @@ export default function Profile() {
           industry: p.industry || '',
         });
       } catch (e) {
-        setError('Failed to load profile');
+        if (!isMounted) return;
+        setError('Failed to load profile. Please try again.');
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
-    load();
+
+    const ensureAuthThenFetch = async () => {
+      const token = await getAccessToken();
+      if (token) {
+        fetchWithTimeout();
+      } else {
+        subscription = onAuthStateChange((s) => {
+          if (s) {
+            fetchWithTimeout();
+            try { subscription?.unsubscribe?.(); } catch (_) {}
+          }
+        });
+      }
+    };
+
+    ensureAuthThenFetch();
+
+    return () => {
+      isMounted = false;
+      try { subscription?.unsubscribe?.(); } catch (_) {}
+    };
   }, []);
 
   const onSave = async (e) => {
@@ -55,7 +88,12 @@ export default function Profile() {
     <div className="p-6 max-w-xl">
       {fromGate && <div className="mb-4 text-sm bg-yellow-50 text-yellow-800 rounded p-3">Complete your profile to continue.</div>}
       <h1 className="text-xl font-semibold mb-4">Your Profile</h1>
-      {error && <div className="text-red-600 mb-3 text-sm">{error}</div>}
+      {error && (
+        <div className="text-red-600 mb-3 text-sm flex items-center justify-between">
+          <span>{error}</span>
+          <button className="btn-secondary btn-wire-sm" onClick={() => { window.location.reload(); }}>Retry</button>
+        </div>
+      )}
       <form className="space-y-4" onSubmit={onSave}>
         <div>
           <label className="block text-sm mb-1">Current Role</label>
