@@ -122,27 +122,27 @@ export default function Profile() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen app-bg flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading your profile...</p>
+          <div className="animate-spin w-8 h-8 border-2 border-accent-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p className="text-gray-500 dark:text-zinc-400">Loading your profile...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+    <div className="min-h-screen app-bg">
       <div className="max-w-2xl mx-auto px-6 py-12">
         {/* Header Section */}
         <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full mb-6">
-            <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-white/90 dark:bg-zinc-800 rounded-full mb-6 shadow-card ring-1 ring-black/5">
+            <svg className="w-10 h-10 text-gray-700 dark:text-zinc-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-3">Complete Your Profile</h1>
-          <p className="text-xl text-gray-600 max-w-md mx-auto">
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-zinc-100 mb-3">Complete Your Profile</h1>
+          <p className="text-xl text-gray-600 dark:text-zinc-300 max-w-md mx-auto">
             Help us personalize your career journey and create meaningful goals
           </p>
         </div>
@@ -150,14 +150,14 @@ export default function Profile() {
         {/* Progress Indicator */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-700">Profile Completion</span>
-            <span className="text-sm text-gray-500">
+            <span className="text-sm font-medium text-gray-700 dark:text-zinc-300">Profile Completion</span>
+            <span className="text-sm text-gray-500 dark:text-zinc-400">
               {[profile.current_role, profile.experience_level, profile.industry].filter(Boolean).length}/3
             </span>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
+          <div className="w-full bg-gray-200 dark:bg-zinc-700 rounded-full h-2">
             <div 
-              className="bg-gradient-to-r from-blue-500 to-indigo-600 h-2 rounded-full transition-all duration-500 ease-out"
+              className="bg-accent-500 h-2 rounded-full transition-all duration-500 ease-out"
               style={{ 
                 width: `${([profile.current_role, profile.experience_level, profile.industry].filter(Boolean).length / 3) * 100}%` 
               }}
@@ -184,12 +184,12 @@ export default function Profile() {
         )}
 
         {/* Profile Form */}
-        <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+        <div className="rounded-2xl shadow-card ring-1 ring-black/5 bg-white/85 dark:bg-zinc-900/70 backdrop-blur p-8">
           <form onSubmit={onSave} className="space-y-8">
             {/* Current Role */}
             <div className="space-y-3">
               <label className="block">
-                <span className="text-lg font-semibold text-gray-900">What's your current role?</span>
+                <span className="text-lg font-semibold text-gray-900 dark:text-zinc-100">What's your current role?</span>
                 <span className="text-red-500 ml-1">*</span>
               </label>
               <input
@@ -197,16 +197,16 @@ export default function Profile() {
                 placeholder="e.g., Software Engineer, Product Manager, Data Analyst"
                 value={profile.current_role}
                 onChange={(e) => setProfile({ ...profile, current_role: e.target.value })}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-lg"
+                className="w-full px-4 py-3 border border-gray-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100 focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-all duration-200 text-lg"
                 required
               />
-              <p className="text-sm text-gray-500">This helps us suggest relevant goals and opportunities</p>
+              <p className="text-sm text-gray-500 dark:text-zinc-400">This helps us suggest relevant goals and opportunities</p>
             </div>
 
             {/* Experience Level */}
             <div className="space-y-3">
               <label className="block">
-                <span className="text-lg font-semibold text-gray-900">What's your experience level?</span>
+                <span className="text-lg font-semibold text-gray-900 dark:text-zinc-100">What's your experience level?</span>
                 <span className="text-red-500 ml-1">*</span>
               </label>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -215,14 +215,14 @@ export default function Profile() {
                     key={option.value}
                     type="button"
                     onClick={() => setProfile({ ...profile, experience_level: option.value })}
-                    className={`p-4 rounded-xl border-2 transition-all duration-200 text-left ${
+                    className={`p-4 rounded-xl border transition-all duration-200 text-left ${
                       profile.experience_level === option.value
-                        ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
-                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                        ? 'border-accent-500 bg-accent-50 dark:bg-accent-900/20 ring-2 ring-accent-200 dark:ring-accent-700'
+                        : 'border-gray-300 dark:border-zinc-600 hover:border-gray-400 dark:hover:border-zinc-500 hover:bg-gray-50 dark:hover:bg-zinc-800/60'
                     }`}
                   >
-                    <div className="font-medium text-gray-900">{option.label}</div>
-                    <div className="text-sm text-gray-600 mt-1">{option.description}</div>
+                    <div className="font-medium text-gray-900 dark:text-zinc-100">{option.label}</div>
+                    <div className="text-sm text-gray-600 dark:text-zinc-400 mt-1">{option.description}</div>
                   </button>
                 ))}
               </div>
@@ -231,7 +231,7 @@ export default function Profile() {
             {/* Industry */}
             <div className="space-y-3">
               <label className="block">
-                <span className="text-lg font-semibold text-gray-900">What industry are you in?</span>
+                <span className="text-lg font-semibold text-gray-900 dark:text-zinc-100">What industry are you in?</span>
                 <span className="text-red-500 ml-1">*</span>
               </label>
               <div className="relative">
@@ -241,17 +241,17 @@ export default function Profile() {
                   value={profile.industry}
                   onChange={(e) => setProfile({ ...profile, industry: e.target.value })}
                   onFocus={() => setShowIndustrySuggestions(true)}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-lg"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100 focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-all duration-200 text-lg"
                   required
                 />
                 {showIndustrySuggestions && (
-                  <div className="absolute z-10 w-full mt-2 bg-white border-2 border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+                  <div className="absolute z-10 w-full mt-2 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-lg shadow-card ring-1 ring-black/5 max-h-60 overflow-y-auto">
                     {industrySuggestions.map((industry) => (
                       <button
                         key={industry}
                         type="button"
                         onClick={() => selectIndustry(industry)}
-                        className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors duration-150 first:rounded-t-xl last:rounded-b-xl"
+                        className="w-full px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-zinc-800/60 transition-colors duration-150 first:rounded-t-lg last:rounded-b-lg text-gray-900 dark:text-zinc-100"
                       >
                         {industry}
                       </button>
@@ -259,7 +259,7 @@ export default function Profile() {
                   </div>
                 )}
               </div>
-              <p className="text-sm text-gray-500">We'll use this to suggest industry-relevant goals</p>
+              <p className="text-sm text-gray-500 dark:text-zinc-400">We'll use this to suggest industry-relevant goals</p>
             </div>
 
             {/* Submit Button */}
@@ -269,8 +269,8 @@ export default function Profile() {
                 disabled={saving || !profile.current_role || !profile.experience_level || !profile.industry}
                 className={`w-full py-4 px-8 rounded-xl text-lg font-semibold transition-all duration-200 ${
                   saving || !profile.current_role || !profile.experience_level || !profile.industry
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 transform hover:scale-[1.02] shadow-lg hover:shadow-xl'
+                    ? 'bg-gray-300 dark:bg-zinc-700 text-gray-500 dark:text-zinc-400 cursor-not-allowed'
+                    : 'btn-primary transform hover:scale-[1.02]'
                 }`}
               >
                 {saving ? (
@@ -288,7 +288,7 @@ export default function Profile() {
 
         {/* Footer Note */}
         <div className="text-center mt-8">
-          <p className="text-gray-500 text-sm">
+          <p className="text-gray-500 dark:text-zinc-400 text-sm">
             You can always update these details later in your profile settings
           </p>
         </div>
