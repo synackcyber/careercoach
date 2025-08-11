@@ -15,6 +15,7 @@ export default function AccountSettings() {
   const [showDisplayNameForm, setShowDisplayNameForm] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
+  const [reduceMotion, setReduceMotion] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -58,6 +59,13 @@ export default function AccountSettings() {
             }
           } catch (err) {
             console.error('Failed to check database policy status:', err);
+          }
+          
+          // Load reduce motion preference
+          const storedReduceMotion = localStorage.getItem('reduceMotion') === '1';
+          setReduceMotion(storedReduceMotion);
+          if (storedReduceMotion) {
+            document.documentElement.classList.add('reduce-motion');
           }
         }
       } catch (err) {
@@ -443,6 +451,39 @@ export default function AccountSettings() {
                 Your account uses secure magic link authentication. Each time you sign in, 
                 we'll send a unique, time-limited link to your email address. 
                 No passwords to remember or manage.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Preferences */}
+        <div className="rounded-2xl shadow-card ring-1 ring-black/5 bg-white/85 dark:bg-zinc-900/70 backdrop-blur p-8 mb-8">
+          <h2 className="text-2xl font-semibold text-gray-900 dark:text-zinc-100 mb-6">Preferences</h2>
+          
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-zinc-100">Reduce Motion</h3>
+                <p className="text-sm text-gray-500 dark:text-zinc-400">Disable animations for users with motion sensitivity</p>
+              </div>
+              <button 
+                onClick={() => { 
+                  const root = document.documentElement; 
+                  const enabled = root.classList.toggle('reduce-motion'); 
+                  localStorage.setItem('reduceMotion', enabled ? '1' : '0');
+                  setReduceMotion(enabled);
+                  setSuccess('Motion preference updated successfully!');
+                }} 
+                className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200"
+              >
+                {reduceMotion ? 'Enabled' : 'Disabled'}
+              </button>
+            </div>
+            
+            <div className="pt-4 border-t border-gray-200 dark:border-zinc-700">
+              <p className="text-sm text-gray-600 dark:text-zinc-400">
+                This setting helps users who are sensitive to motion or prefer a more static experience. 
+                When enabled, animations and transitions throughout the app will be reduced or disabled.
               </p>
             </div>
           </div>
