@@ -8,8 +8,11 @@ export default function AccountSettings() {
   const [success, setSuccess] = useState('');
   const [user, setUser] = useState(null);
   const [email, setEmail] = useState('');
+  const [displayName, setDisplayName] = useState('');
   const [newEmail, setNewEmail] = useState('');
+  const [newDisplayName, setNewDisplayName] = useState('');
   const [showEmailForm, setShowEmailForm] = useState(false);
+  const [showDisplayNameForm, setShowDisplayNameForm] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -18,6 +21,7 @@ export default function AccountSettings() {
         if (user) {
           setUser(user);
           setEmail(user.email || '');
+          setDisplayName(user.user_metadata?.display_name || '');
         }
       } catch (err) {
         console.error('Error fetching user:', err);
@@ -49,6 +53,34 @@ export default function AccountSettings() {
       }
     } catch (err) {
       setError('Failed to update email. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDisplayNameChange = async (e) => {
+    e.preventDefault();
+    if (!newDisplayName || newDisplayName === displayName) return;
+
+    setSaving(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const { error } = await supabase.auth.updateUser({
+        data: { display_name: newDisplayName }
+      });
+      
+      if (error) {
+        setError(error.message);
+      } else {
+        setSuccess('Display name updated successfully!');
+        setDisplayName(newDisplayName);
+        setShowDisplayNameForm(false);
+        setNewDisplayName('');
+      }
+    } catch (err) {
+      setError('Failed to update display name. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -141,7 +173,52 @@ export default function AccountSettings() {
         <div className="rounded-2xl shadow-card ring-1 ring-black/5 bg-white/85 dark:bg-zinc-900/70 backdrop-blur p-8 mb-8">
           <h2 className="text-2xl font-semibold text-gray-900 dark:text-zinc-100 mb-6">Account Information</h2>
           
-          <div className="space-y-4">
+          <div className="space-y-6">
+            {/* Display Name */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-2">Display Name</label>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-900 dark:text-zinc-100">
+                  {displayName || 'Not set'}
+                </span>
+                <button
+                  onClick={() => setShowDisplayNameForm(!showDisplayNameForm)}
+                  className="btn-secondary"
+                >
+                  {showDisplayNameForm ? 'Cancel' : displayName ? 'Edit Name' : 'Set Name'}
+                </button>
+              </div>
+            </div>
+
+            {showDisplayNameForm && (
+              <form onSubmit={handleDisplayNameChange} className="pt-4 border-t border-gray-200 dark:border-zinc-700">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-2">Display Name</label>
+                    <input
+                      type="text"
+                      value={newDisplayName}
+                      onChange={(e) => setNewDisplayName(e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100 focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-all duration-200"
+                      placeholder="Enter your preferred name"
+                      required
+                    />
+                    <p className="text-sm text-gray-500 dark:text-zinc-400 mt-1">
+                      This is how your name will appear throughout the app
+                    </p>
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={saving || !newDisplayName || newDisplayName === displayName}
+                    className="btn-primary w-full"
+                  >
+                    {saving ? 'Updating...' : 'Update Display Name'}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* Email Address */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-2">Email Address</label>
               <div className="flex items-center justify-between">
