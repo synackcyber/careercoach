@@ -374,7 +374,7 @@ export default function Profile() {
                     </div>
                   </div>
                 )}
-                
+              </div>
             </div>
 
             {/* Submit Button - Only show when there are changes or profile is incomplete */}
