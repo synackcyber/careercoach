@@ -94,10 +94,9 @@ export default function DesktopNav({ expanded, onToggle, route, onLogout }) {
             ))}
           </nav>
         </div>
-      </div>
 
-      {/* Footer */}
-      <div className="border-t px-3 py-2 space-y-2">
+        {/* Footer - pushed to bottom with mt-auto */}
+        <div className="border-t px-3 py-2 space-y-2 mt-auto">
         <button onClick={() => { const root = document.documentElement; const isDark = root.classList.toggle('dark'); localStorage.setItem('theme', isDark ? 'dark' : 'light'); }} className={`w-full flex items-center ${expanded ? 'gap-3 px-3 justify-start' : 'px-0 justify-center'} h-10 py-0 rounded-xl hover:bg-gray-100 dark:hover:bg-zinc-800`}>
           <span className="inline-flex w-6 h-6 aspect-square items-center justify-center rounded-full bg-zinc-200 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-100 text-[12px] select-none">🌓</span>
           <motion.span initial={false} animate={{ opacity: expanded ? 1 : 0, x: expanded ? 0 : -6 }} transition={{ duration: 0.16 }} className={`overflow-hidden whitespace-nowrap transition-[max-width] duration-200 ${expanded ? 'max-w-[220px]' : 'max-w-0'}`}>Dark Mode</motion.span>
@@ -111,6 +110,7 @@ export default function DesktopNav({ expanded, onToggle, route, onLogout }) {
           <span className="inline-flex w-6 h-6 aspect-square items-center justify-center rounded-full bg-red-100 dark:bg-red-800/50 text-red-700 dark:text-red-200 text-[12px] select-none">⎋</span>
           <motion.span initial={false} animate={{ opacity: expanded ? 1 : 0, x: expanded ? 0 : -6 }} transition={{ duration: 0.16 }} className={`overflow-hidden whitespace-nowrap transition-[max-width] duration-200 ${expanded ? 'max-w-[220px]' : 'max-w-0'}`}>Logout</motion.span>
         </button>
+        </div>
       </div>
     </motion.aside>
   );
