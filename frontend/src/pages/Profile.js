@@ -27,7 +27,40 @@ export default function Profile() {
     experience_level: 'mid', 
     industry: '' 
   });
+  const [originalProfile, setOriginalProfile] = useState(null);
   const [showIndustrySuggestions, setShowIndustrySuggestions] = useState(false);
+
+  // Check if there are unsaved changes
+  const hasChanges = () => {
+    if (!originalProfile) return false;
+    return (
+      profile.current_role !== originalProfile.current_role ||
+      profile.experience_level !== originalProfile.experience_level ||
+      profile.industry !== originalProfile.industry
+    );
+  };
+
+  // Check if profile is complete (all required fields filled)
+  const isProfileComplete = () => {
+    return profile.current_role && profile.experience_level && profile.industry;
+  };
+
+  // Get button text based on current state
+  const getButtonText = () => {
+    if (saving) return 'Saving...';
+    if (!isProfileComplete()) return 'Complete Profile to Continue';
+    if (!hasChanges()) return 'Profile Complete ✓';
+    if (originalProfile?.id) return 'Update Profile';
+    return 'Save Profile';
+  };
+
+  // Get button state
+  const getButtonState = () => {
+    if (saving) return 'saving';
+    if (!isProfileComplete()) return 'incomplete';
+    if (!hasChanges()) return 'complete';
+    return 'hasChanges';
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -47,12 +80,14 @@ export default function Profile() {
         if (!isMounted) return;
         try { console.debug('[profile] fetch success'); } catch (_) {}
         const p = result?.data?.data || {};
-        setProfile({
+        const profileData = {
           id: p.id,
           current_role: p.current_role || '',
           experience_level: p.experience_level || 'mid',
           industry: p.industry || '',
-        });
+        };
+        setProfile(profileData);
+        setOriginalProfile(profileData); // Store original for change detection
       } catch (e) {
         if (!isMounted) return;
         try { console.error('[profile] fetch error', e); } catch (_) {}
@@ -106,8 +141,13 @@ export default function Profile() {
         experience_level: profile.experience_level,
         industry: profile.industry,
       });
+      // Update original profile to reflect saved state
+      setOriginalProfile({ ...profile });
       localStorage.removeItem('onboarding_gate');
-      window.location.hash = '#/';
+      // Only redirect if this was a new profile completion
+      if (!originalProfile?.current_role || !originalProfile?.experience_level || !originalProfile?.industry) {
+        window.location.hash = '#/';
+      }
     } catch (e) {
       setError('Failed to save profile');
     } finally {
@@ -130,6 +170,8 @@ export default function Profile() {
       </div>
     );
   }
+
+  const buttonState = getButtonState();
 
   return (
     <div className="min-h-screen app-bg">
@@ -262,27 +304,44 @@ export default function Profile() {
               <p className="text-sm text-gray-500 dark:text-zinc-400">We'll use this to suggest industry-relevant goals</p>
             </div>
 
-            {/* Submit Button */}
-            <div className="pt-6">
-              <button
-                type="submit"
-                disabled={saving || !profile.current_role || !profile.experience_level || !profile.industry}
-                className={`w-full py-4 px-8 rounded-xl text-lg font-semibold transition-all duration-200 ${
-                  saving || !profile.current_role || !profile.experience_level || !profile.industry
-                    ? 'bg-gray-300 dark:bg-zinc-700 text-gray-500 dark:text-zinc-400 cursor-not-allowed'
-                    : 'btn-primary transform hover:scale-[1.02]'
-                }`}
-              >
-                {saving ? (
-                  <div className="flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                    Saving...
-                  </div>
-                ) : (
-                  'Complete Profile & Continue'
-                )}
-              </button>
-            </div>
+            {/* Submit Button - Only show when there are changes or profile is incomplete */}
+            {(buttonState === 'hasChanges' || buttonState === 'incomplete') && (
+              <div className="pt-6">
+                <button
+                  type="submit"
+                  disabled={saving || !isProfileComplete()}
+                  className={`w-full py-4 px-8 rounded-xl text-lg font-semibold transition-all duration-200 ${
+                    saving || !isProfileComplete()
+                      ? 'bg-gray-300 dark:bg-zinc-700 text-gray-500 dark:text-zinc-400 cursor-not-allowed'
+                      : 'btn-primary transform hover:scale-[1.02]'
+                  }`}
+                >
+                  {saving ? (
+                    <div className="flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                      Saving...
+                    </div>
+                  ) : (
+                    getButtonText()
+                  )}
+                </button>
+              </div>
+            )}
+
+            {/* Success State - Show when profile is complete and no changes */}
+            {buttonState === 'complete' && (
+              <div className="pt-6">
+                <div className="w-full py-4 px-8 rounded-xl text-lg font-semibold bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 text-green-800 dark:text-green-200 text-center flex items-center justify-center">
+                  <svg className="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  Profile Complete ✓
+                </div>
+                <p className="text-center text-sm text-gray-500 dark:text-zinc-400 mt-3">
+                  Your profile is up to date. Make changes above to update it.
+                </p>
+              </div>
+            )}
           </form>
         </div>
 
