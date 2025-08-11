@@ -181,21 +181,21 @@
   }
 
   .timeline-grid-y {
-    --gap: 56px;          /* row height */
-    --gap-major: 224px;   /* stronger every 4 rows */
+    --gap: 64px;          /* row height */
+    --gap-major: 240px;   /* stronger every 4 rows */
     background-image:
       repeating-linear-gradient(to bottom,
-        rgba(0,0,0,0.05) 0 1px, transparent 1px var(--gap)),
+        rgba(0,0,0,0.03) 0 1px, transparent 1px var(--gap)),
       repeating-linear-gradient(to bottom,
-        rgba(0,0,0,0.08) 0 1px, transparent 1px var(--gap-major));
+        rgba(0,0,0,0.06) 0 1px, transparent 1px var(--gap-major));
     background-blend-mode: multiply;
   }
   .dark .timeline-grid-y {
     background-image:
       repeating-linear-gradient(to bottom,
-        rgba(255,255,255,0.06) 0 1px, transparent 1px var(--gap)),
+        rgba(255,255,255,0.04) 0 1px, transparent 1px var(--gap)),
       repeating-linear-gradient(to bottom,
-        rgba(255,255,255,0.10) 0 1px, transparent 1px var(--gap-major));
+        rgba(255,255,255,0.08) 0 1px, transparent 1px var(--gap-major));
   }
   
   .input-field {

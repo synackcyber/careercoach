@@ -133,55 +133,12 @@ export default function Profile() {
 
   useEffect(() => {
     let isMounted = true;
-    let subscription;
 
-    // Add a listener for when the user returns to this page
-    const handleVisibilityChange = () => {
-      if (!document.hidden && isMounted) {
-        // User returned to the page, refresh profile data
-        try { console.debug('[profile] page became visible, refreshing data'); } catch (_) {}
-        fetchWithTimeout();
-      }
-    };
-
-    // Also refresh when the window regains focus (user switches back to tab)
-    const handleFocus = () => {
-      if (isMounted) {
-        try { console.debug('[profile] window gained focus, refreshing data'); } catch (_) {}
-        fetchWithTimeout();
-      }
-    };
-
-    // Refresh when user navigates back to this page (hash change)
-    const handleHashChange = () => {
-      if (isMounted && window.location.hash === '#/profile') {
-        try { console.debug('[profile] hash changed to profile, refreshing data'); } catch (_) {}
-        fetchWithTimeout();
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('focus', handleFocus);
-    window.addEventListener('hashchange', handleHashChange);
-
-    // Initial fetch
+    // Initial fetch only
     fetchWithTimeout();
     
-    // Also refresh after a delay to catch any recent changes from Account page
-    const refreshTimer = setTimeout(() => {
-      if (isMounted) {
-        try { console.debug('[profile] delayed refresh to catch recent changes'); } catch (_) {}
-        fetchWithTimeout();
-      }
-    }, 2000); // Increased to 2 seconds to allow database transaction to complete
-
     return () => {
       isMounted = false;
-      try { subscription?.unsubscribe?.(); } catch (_) {}
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('focus', handleFocus);
-      window.removeEventListener('hashchange', handleHashChange);
-      clearTimeout(refreshTimer);
     };
   }, []);
 
@@ -257,16 +214,13 @@ export default function Profile() {
             transition={{ duration: 0.6, ease: "easeOut" }}
             className="relative inline-flex items-center justify-center w-28 h-28 mb-8"
           >
-            {/* Animated background rings */}
-            <div className="absolute inset-0 bg-gradient-to-br from-accent-500 to-accent-600 rounded-full shadow-2xl ring-1 ring-accent-400/20"></div>
-            <div className="absolute inset-2 bg-gradient-to-br from-accent-400 to-accent-500 rounded-full animate-pulse"></div>
-            <div className="absolute inset-4 bg-gradient-to-br from-accent-300 to-accent-400 rounded-full animate-pulse" style={{animationDelay: '0.5s'}}></div>
-            
-            {/* Icon with floating effect */}
-            <div className="relative z-10 w-16 h-16 bg-white/90 dark:bg-zinc-800/90 rounded-2xl flex items-center justify-center shadow-lg backdrop-blur-sm">
-              <svg className="w-8 h-8 text-accent-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
+            {/* Clean, modern icon background */}
+            <div className="w-28 h-28 bg-accent-100 dark:bg-accent-900/30 rounded-3xl flex items-center justify-center shadow-sm ring-1 ring-accent-200/50 dark:ring-accent-700/30 transform hover:scale-105 transition-all duration-300">
+              <div className="w-20 h-20 bg-accent-50 dark:bg-accent-800/20 rounded-2xl flex items-center justify-center">
+                <svg className="w-10 h-10 text-accent-600 dark:text-accent-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
             </div>
           </motion.div>
           
