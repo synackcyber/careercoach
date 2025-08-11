@@ -45,11 +45,12 @@ export default function Profile() {
     };
 
     const ensureAuthThenFetch = async () => {
+      // Kick off an immediate fetch attempt (will 401 fast if unauthenticated)
+      fetchWithTimeout();
+
       const token = await getAccessToken();
       try { console.debug('[profile] token present =', !!token); } catch (_) {}
-      if (token) {
-        fetchWithTimeout();
-      } else {
+      if (!token) {
         subscription = onAuthStateChange((s) => {
           if (s) {
             try { console.debug('[profile] session arrived, fetching'); } catch (_) {}
