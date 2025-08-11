@@ -101,14 +101,6 @@ export default function TimelineVertical() {
               >
                 Timeline
               </motion.h1>
-              <motion.p 
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.4, delay: 0.3 }}
-                className="text-base text-gray-600 dark:text-zinc-400 font-medium"
-              >
-                Explore your journey through time
-              </motion.p>
             </div>
             
             {/* Compact Filters */}
@@ -134,7 +126,7 @@ export default function TimelineVertical() {
                 onChange={(e) => setYearFilter(e.target.value)}
                 className="appearance-none bg-white/60 dark:bg-zinc-800/60 border border-gray-200/50 dark:border-zinc-700/50 rounded-lg px-3 py-1.5 pr-8 text-xs font-medium text-gray-700 dark:text-zinc-300 focus:ring-1 focus:ring-accent-500 focus:border-transparent transition-all duration-200 backdrop-blur-sm"
               >
-                <option value="all">All Years</option>
+                <option value="all">All Time</option>
                 {years.map(year => (
                   <option key={year} value={year}>{year}</option>
                 ))}
@@ -152,7 +144,7 @@ export default function TimelineVertical() {
                   {/* Year Display - Centered Above */}
                   <div className="text-center mb-4">
                     <h3 className="text-lg md:text-xl font-semibold text-gray-700 dark:text-zinc-300">
-                      {yearFilter === 'all' ? 'All Years' : yearFilter}
+                      {yearFilter === 'all' ? 'All Time' : yearFilter}
                     </h3>
                   </div>
                   
@@ -218,7 +210,7 @@ export default function TimelineVertical() {
 
                 {/* Goals Grid */}
                 {filteredEntries[selectedMonth]?.length > 0 ? (
-                  <div className="grid gap-3 md:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                  <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                     {filteredEntries[selectedMonth].map(({ id, goal, date }) => (
                       <motion.div
                         key={id}
@@ -229,51 +221,100 @@ export default function TimelineVertical() {
                       >
                         <button
                           onClick={() => openGoal(goal)}
-                          className="w-full text-left p-4 md:p-6 rounded-xl md:rounded-2xl bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl shadow-lg ring-1 ring-gray-200/50 dark:ring-zinc-700/50 hover:shadow-xl transition-all duration-300 group-hover:scale-105"
+                          className="w-full text-left p-6 rounded-2xl bg-white/85 dark:bg-zinc-900/70 backdrop-blur ring-1 ring-black/5 shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-xl group-hover:scale-105"
                         >
                           {/* Goal Header */}
-                          <div className="flex items-start justify-between mb-2 md:mb-3">
-                            <h3 className="text-base md:text-lg font-bold text-gray-900 dark:text-zinc-100 line-clamp-2 group-hover:text-accent-700 dark:group-hover:text-accent-300 transition-colors flex-1 mr-2">
+                          <div className="flex items-start justify-between mb-4">
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-zinc-100 line-clamp-2 flex-1 mr-2">
                               {goal.title}
                             </h3>
-                            <span className="text-xs md:text-sm text-gray-500 dark:text-zinc-400 bg-gray-100 dark:bg-zinc-800 px-2 py-1 rounded-full flex-shrink-0">
-                              {new Date(date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                            </span>
+                            {/* Animated Status Dot */}
+                            <div className="flex-shrink-0">
+                              <div className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                                goal.status === 'completed' ? 'bg-blue-500 shadow-lg shadow-blue-500/30' : 
+                                goal.status === 'paused' ? 'bg-yellow-500 shadow-lg shadow-yellow-500/30' : 
+                                'bg-green-500 shadow-lg shadow-green-500/30'
+                              } ${
+                                goal.status === 'active' ? 'animate-pulse' : ''
+                              } group-hover:scale-110`} />
+                            </div>
                           </div>
                           
                           {/* Goal Description */}
                           {goal.description && (
-                            <p className="text-xs md:text-sm text-gray-600 dark:text-zinc-300 line-clamp-2 leading-relaxed mb-3 md:mb-4">
-                              {goal.description}
-                            </p>
-                          )}
-                          
-                          {/* Status & Priority */}
-                          <div className="flex flex-wrap items-center gap-1.5 md:gap-2">
-                            <div className={`inline-flex items-center gap-1 md:gap-1.5 px-2 py-1 rounded-full text-[10px] md:text-xs font-medium ${
-                              goal.status === 'completed' 
-                                ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200'
-                                : goal.status === 'paused'
-                                ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200'
-                                : 'bg-accent-100 dark:bg-accent-900/30 text-accent-800 dark:text-accent-200'
-                            }`}>
-                              <div className={`w-1 md:w-1.5 h-1 md:h-1.5 rounded-full ${
-                                goal.status === 'completed' ? 'bg-green-500' : goal.status === 'paused' ? 'bg-yellow-500' : 'bg-accent-500'
-                              }`} />
-                              {goal.status}
+                            <div className="mb-4">
+                              <p className={`text-gray-600 dark:text-zinc-300 transition-all duration-300 ${
+                                goal.description.length > 100 ? 'line-clamp-2 group-hover:line-clamp-none' : ''
+                              }`}>
+                                {goal.description}
+                              </p>
+                              {goal.description.length > 100 && (
+                                <div className="mt-2 text-xs text-accent-600 dark:text-accent-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                  Hover to see more
+                                </div>
+                              )}
                             </div>
-                            
-                            <div className={`inline-flex items-center gap-1 md:gap-1.5 px-2 py-1 rounded-full text-[10px] md:text-xs font-medium ${
-                              goal.priority === 'high'
-                                ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200'
-                                : goal.priority === 'medium'
-                                ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200'
-                                : 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200'
-                            }`}>
-                              <div className={`w-1 md:w-1.5 h-1 md:h-1.5 rounded-full ${
-                                goal.priority === 'high' ? 'bg-red-500' : goal.priority === 'medium' ? 'bg-yellow-500' : 'bg-blue-500'
+                          )}
+
+                          {/* Date */}
+                          <div className="flex items-center justify-between text-sm text-gray-500 dark:text-zinc-400 mb-4">
+                            <div className="flex items-center space-x-1">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                              <span>{new Date(date).toLocaleDateString()}</span>
+                            </div>
+                          </div>
+
+                          {/* Progress Bar */}
+                          <div className="mb-4">
+                            <div className="flex items-center justify-between text-sm text-gray-600 dark:text-zinc-300 mb-2">
+                              <span>Progress</span>
+                              <div className="text-xs text-gray-500 dark:text-zinc-400">
+                                {goal.due_date ? (() => {
+                                  const now = new Date();
+                                  const due = new Date(goal.due_date);
+                                  const diffDays = Math.ceil((due - now) / (1000 * 60 * 60 * 24));
+                                  if (diffDays === 0) return 'due today';
+                                  if (diffDays < 0) return `${Math.abs(diffDays)}d overdue`;
+                                  if (diffDays < 30) return `in ${diffDays}d`;
+                                  const months = Math.ceil(diffDays / 30);
+                                  return `in ${months}mo`;
+                                })() : ''}
+                              </div>
+                            </div>
+                            <div className="relative">
+                              {/* Background track */}
+                              <div className="h-2 bg-gray-200 dark:bg-zinc-700 rounded-full overflow-hidden">
+                                {/* Animated progress fill */}
+                                <div 
+                                  className="h-full rounded-full transition-all duration-1000 ease-out group-hover:shadow-sm"
+                                  style={{
+                                    width: `${goal.progress && goal.progress.length > 0 ? Math.max(...goal.progress.map(p => p.percentage)) : 0}%`,
+                                    background: `linear-gradient(90deg, 
+                                      ${(goal.progress && goal.progress.length > 0 ? Math.max(...goal.progress.map(p => p.percentage)) : 0) >= 80 ? '#10b981' : 
+                                        (goal.progress && goal.progress.length > 0 ? Math.max(...goal.progress.map(p => p.percentage)) : 0) >= 50 ? '#f59e0b' : '#ef4444'} 0%, 
+                                      ${(goal.progress && goal.progress.length > 0 ? Math.max(...goal.progress.map(p => p.percentage)) : 0) >= 80 ? '#059669' : 
+                                        (goal.progress && goal.progress.length > 0 ? Math.max(...goal.progress.map(p => p.percentage)) : 0) >= 50 ? '#d97706' : '#dc2626'} 100%)`
+                                  }}
+                                />
+                              </div>
+                              {/* Progress percentage (subtle) */}
+                              <div className="absolute -top-6 right-0 text-xs text-gray-500 dark:text-zinc-400">
+                                {goal.progress && goal.progress.length > 0 ? Math.max(...goal.progress.map(p => p.percentage)) : 0}%
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Bottom action bar */}
+                          <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-zinc-800">
+                            <div className="flex items-center gap-2">
+                              {/* Priority indicator - subtle dot */}
+                              <div className={`w-2 h-2 rounded-full ${
+                                goal.priority === 'high' ? 'bg-red-500' : 
+                                goal.priority === 'medium' ? 'bg-yellow-500' : 
+                                'bg-gray-400'
                               }`} />
-                              {goal.priority || 'low'}
                             </div>
                           </div>
                         </button>

@@ -16,11 +16,11 @@ export default function Sidebar({ open, onClose, onLogout }) {
       {open && (
         <>
           <motion.div className="fixed inset-0 z-30" variants={overlayVariants} initial="hidden" animate="visible" exit="exit" onClick={onClose}>
-            <div className="absolute inset-0 bg-black/35 backdrop-blur-sm" />
+            <div className="absolute inset-0 bg-black/35" />
           </motion.div>
 
           <motion.aside className="fixed top-0 left-0 h-full w-80 z-40" variants={drawerVariants} initial="hidden" animate="visible" exit="exit">
-            <div className="h-full rounded-r-2xl overflow-hidden shadow-2xl ring-1 ring-black/5 bg-white/85 backdrop-blur flex flex-col">
+            <div className="h-full rounded-r-2xl overflow-hidden shadow-2xl ring-1 ring-black/5 bg-white dark:bg-zinc-900 flex flex-col">
               <div className="h-14 flex items-center border-b">
                 <div className="px-2">
                   <button className="btn-icon" aria-label="Close menu" onClick={onClose}>
@@ -56,6 +56,20 @@ export default function Sidebar({ open, onClose, onLogout }) {
                     <svg className="w-5 h-5 text-gray-900 dark:text-zinc-100" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 6H3"/><path d="M21 12H8"/><path d="M21 18H13"/></svg>
                   </div>
                   <span className="font-medium">Timeline</span>
+                </button>
+
+                {/* Profile */}
+                <button
+                  onClick={navTo('#/profile')}
+                  className="w-full flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
+                >
+                  <div className="w-6 h-6 flex items-center justify-center shrink-0">
+                    <svg className="w-5 h-5 text-gray-900 dark:text-zinc-100" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                      <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                  </div>
+                  <span className="font-medium">Profile</span>
                 </button>
 
                 {/* Account Settings */}

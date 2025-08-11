@@ -74,27 +74,43 @@ export default function LayoutShell({ route, session, onLogout, needsOnboarding,
 
       {/* Mobile header: hamburger, centered title, right actions */}
       {!isDesktop && isAuthenticated && (
-        <div className="fixed top-0 left-0 right-0 z-40 h-14 px-3 flex items-center justify-between bg-white/90 dark:bg-zinc-900/90 backdrop-blur border-b border-gray-200/60 dark:border-zinc-800/60">
+        <motion.div 
+          className="fixed top-0 left-0 right-0 z-40 h-14 bg-white/90 dark:bg-zinc-900/90 backdrop-blur border-b border-gray-200/60 dark:border-zinc-800/60"
+          initial={false}
+          animate={{ 
+            opacity: sidebarOpen ? 0 : 1,
+            y: sidebarOpen ? -56 : 0,
+            scale: sidebarOpen ? 0.95 : 1
+          }}
+          transition={{ 
+            type: 'spring', 
+            stiffness: 400, 
+            damping: 30,
+            duration: 0.3
+          }}
+          style={{ transformOrigin: 'center top' }}
+        >
+          {/* Hamburger button - positioned absolutely on the left */}
           <button
             aria-label="Open menu"
-            className="btn-icon"
+            className="absolute left-3 top-1/2 -translate-y-1/2 btn-icon z-10"
             onClick={() => setSidebarOpen(true)}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
           </button>
 
-          <motion.div 
-            className="text-sm font-semibold text-gray-900 dark:text-zinc-100"
-            initial={false}
-            animate={{ opacity: showPageTitle ? 1 : 0, scale: showPageTitle ? 1 : 0.8 }}
-            transition={{ duration: 0.2 }}
-          >
-            {pageTitle}
-          </motion.div>
-
-          <div className="flex items-center gap-2">
+          {/* Centered title */}
+          <div className="h-full flex items-center justify-center">
+            <motion.div 
+              className="text-sm font-semibold text-gray-900 dark:text-zinc-100"
+              initial={false}
+              animate={{ opacity: showPageTitle ? 1 : 0, scale: showPageTitle ? 1 : 0.8 }}
+              transition={{ duration: 0.2 }}
+            >
+              {pageTitle}
+            </motion.div>
           </div>
-        </div>
+        </motion.div>
       )}
 
       {/* Drawer for tablet/mobile */}
@@ -109,7 +125,19 @@ export default function LayoutShell({ route, session, onLogout, needsOnboarding,
         transition={{ type: 'spring', stiffness: 320, damping: 40 }}
       >
         {/* add top padding for mobile header; remove bottom nav padding */}
-        <div className={`${(!isDesktop && isAuthenticated) ? 'pt-16 pb-4' : 'pb-0'}`}>
+        <motion.div 
+          className={`${(!isDesktop && isAuthenticated) ? 'pb-4' : 'pb-0'}`}
+          initial={false}
+          animate={{ 
+            paddingTop: (!isDesktop && isAuthenticated) ? (sidebarOpen ? '0.5rem' : '4rem') : '0'
+          }}
+          transition={{ 
+            type: 'spring', 
+            stiffness: 400, 
+            damping: 30,
+            duration: 0.3
+          }}
+        >
           {isAuthenticated && needsOnboarding && route !== '#/profile' && (
             <div className="px-6 pt-2">
               <div className="max-w-7xl mx-auto">
@@ -120,8 +148,8 @@ export default function LayoutShell({ route, session, onLogout, needsOnboarding,
               </div>
             </div>
           )}
-          {children}
-        </div>
+          {React.cloneElement(children, { sidebarOpen: !isDesktop ? sidebarOpen : false })}
+        </motion.div>
 
         {/* Floating New Goal button (mobile) */}
         {!isDesktop && isAuthenticated && (

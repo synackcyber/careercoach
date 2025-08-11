@@ -18,7 +18,7 @@ const industryOptions = [
   'Real Estate', 'Transportation', 'Energy', 'Legal', 'Marketing'
 ];
 
-export default function Profile() {
+export default function Profile({ sidebarOpen = false }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -31,6 +31,13 @@ export default function Profile() {
   });
   const [originalProfile, setOriginalProfile] = useState(null);
 
+  // Helper function to conditionally apply accent colors
+  const getAccentColor = (baseColor, reducedColor = 'gray') => {
+    if (sidebarOpen) {
+      return reducedColor;
+    }
+    return baseColor;
+  };
 
   // Check if there are unsaved changes
   const hasChanges = () => {

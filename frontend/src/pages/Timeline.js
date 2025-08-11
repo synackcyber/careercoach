@@ -200,7 +200,7 @@ export default function Timeline() {
                           title={g.title}
                           onClick={() => openGoal(g)}
                         >
-                          {g.priority ? `${g.priority} • ` : ''}{g.status}
+                          {g.status}
                         </button>
                       </div>
                     );
