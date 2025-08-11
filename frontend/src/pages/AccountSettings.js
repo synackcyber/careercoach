@@ -10,10 +10,6 @@ export default function AccountSettings() {
   const [email, setEmail] = useState('');
   const [newEmail, setNewEmail] = useState('');
   const [showEmailForm, setShowEmailForm] = useState(false);
-  const [showPasswordForm, setShowPasswordForm] = useState(false);
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -58,40 +54,7 @@ export default function AccountSettings() {
     }
   };
 
-  const handlePasswordChange = async (e) => {
-    e.preventDefault();
-    if (newPassword !== confirmPassword) {
-      setError('New passwords do not match');
-      return;
-    }
 
-    if (newPassword.length < 6) {
-      setError('Password must be at least 6 characters long');
-      return;
-    }
-
-    setSaving(true);
-    setError('');
-    setSuccess('');
-
-    try {
-      const { error } = await supabase.auth.updateUser({ password: newPassword });
-      
-      if (error) {
-        setError(error.message);
-      } else {
-        setSuccess('Password updated successfully!');
-        setShowPasswordForm(false);
-        setCurrentPassword('');
-        setNewPassword('');
-        setConfirmPassword('');
-      }
-    } catch (err) {
-      setError('Failed to update password. Please try again.');
-    } finally {
-      setSaving(false);
-    }
-  };
 
   const handleDeleteAccount = async () => {
     if (!window.confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
@@ -219,59 +182,28 @@ export default function AccountSettings() {
           </div>
         </div>
 
-        {/* Security Settings */}
+        {/* Authentication Info */}
         <div className="rounded-2xl shadow-card ring-1 ring-black/5 bg-white/85 dark:bg-zinc-900/70 backdrop-blur p-8 mb-8">
-          <h2 className="text-2xl font-semibold text-gray-900 dark:text-zinc-100 mb-6">Security</h2>
+          <h2 className="text-2xl font-semibold text-gray-900 dark:text-zinc-100 mb-6">Authentication</h2>
           
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-medium text-gray-900 dark:text-zinc-100">Password</h3>
-                <p className="text-sm text-gray-500 dark:text-zinc-400">Update your account password</p>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-zinc-100">Sign-in Method</h3>
+                <p className="text-sm text-gray-500 dark:text-zinc-400">Magic link authentication via email</p>
               </div>
-              <button
-                onClick={() => setShowPasswordForm(!showPasswordForm)}
-                className="btn-secondary"
-              >
-                {showPasswordForm ? 'Cancel' : 'Change Password'}
-              </button>
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300">
+                Magic Link
+              </span>
             </div>
-
-            {showPasswordForm && (
-              <form onSubmit={handlePasswordChange} className="pt-4 border-t border-gray-200 dark:border-zinc-700">
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-2">New Password</label>
-                    <input
-                      type="password"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100 focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-all duration-200"
-                      placeholder="Enter new password"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-2">Confirm New Password</label>
-                    <input
-                      type="password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100 focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-all duration-200"
-                      placeholder="Confirm new password"
-                      required
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={saving || !newPassword || !confirmPassword || newPassword !== confirmPassword}
-                    className="btn-primary w-full"
-                  >
-                    {saving ? 'Updating...' : 'Update Password'}
-                  </button>
-                </div>
-              </form>
-            )}
+            
+            <div className="pt-4 border-t border-gray-200 dark:border-zinc-700">
+              <p className="text-sm text-gray-600 dark:text-zinc-400">
+                Your account uses secure magic link authentication. Each time you sign in, 
+                we'll send a unique, time-limited link to your email address. 
+                No passwords to remember or manage.
+              </p>
+            </div>
           </div>
         </div>
 
