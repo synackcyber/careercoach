@@ -9,6 +9,7 @@ import (
     "goaltracker/middleware"
     "github.com/gin-gonic/gin"
     "strings"
+    "gorm.io/gorm/clause"
 )
 
 type AIGoalRequest struct {
@@ -77,10 +78,13 @@ func GetOrCreateMyProfile(c *gin.Context) {
 
     var profile models.UserProfile
     if err := database.DB.Where("user_id = ?", userID).First(&profile).Error; err != nil {
-        // Attempt idempotent create (safe under concurrency)
+        // Insert if missing; ignore conflict on user_id
         profile = models.UserProfile{UserID: userID}
-        if err2 := database.DB.Where("user_id = ?", userID).FirstOrCreate(&profile, profile).Error; err2 != nil {
-            // Handle duplicate inserts from concurrent requests by reading existing
+        if err2 := database.DB.Clauses(clause.OnConflict{
+            Columns:   []clause.Column{{Name: "user_id"}},
+            DoNothing: true,
+        }).Create(&profile).Error; err2 != nil {
+            // As a fallback, try to read existing if conflict or any transient error
             if strings.Contains(strings.ToLower(err2.Error()), "duplicate") || strings.Contains(err2.Error(), "23505") {
                 if err3 := database.DB.Where("user_id = ?", userID).First(&profile).Error; err3 == nil {
                     c.JSON(http.StatusOK, gin.H{"data": profile})
@@ -90,6 +94,8 @@ func GetOrCreateMyProfile(c *gin.Context) {
             c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user profile"})
             return
         }
+        // Ensure we return the row (whether created or pre-existing)
+        database.DB.Where("user_id = ?", userID).First(&profile)
     }
 
     c.JSON(http.StatusOK, gin.H{"data": profile})
