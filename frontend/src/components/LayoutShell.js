@@ -10,6 +10,7 @@ export default function LayoutShell({ route, session, onLogout, children }) {
   const isTablet = useMediaQuery('(min-width: 640px)');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [desktopExpanded, setDesktopExpanded] = useState(false);
+  const isAuthenticated = !!session;
 
   // Apply saved preferences for theme and motion
   useEffect(() => {
@@ -23,12 +24,12 @@ export default function LayoutShell({ route, session, onLogout, children }) {
     if (savedRM === '0') root.classList.remove('reduce-motion');
   }, []);
 
-  const contentPaddingLeft = isDesktop ? getDesktopNavWidth(desktopExpanded) : 0;
+  const contentPaddingLeft = isDesktop && isAuthenticated ? getDesktopNavWidth(desktopExpanded) : 0;
 
   return (
     <div className="min-h-screen app-bg">
       {/* Desktop push nav (width-based) */}
-      {isDesktop && (
+      {isDesktop && isAuthenticated && (
         <DesktopNav
           expanded={desktopExpanded}
           onToggle={() => setDesktopExpanded(v => !v)}
@@ -38,7 +39,7 @@ export default function LayoutShell({ route, session, onLogout, children }) {
       )}
 
       {/* Tablet/Mobile hamburger trigger */}
-      {!isDesktop && (
+      {!isDesktop && isAuthenticated && (
         <button
           className="fixed top-3 left-3 z-40 btn-icon"
           aria-label="Open menu"
@@ -49,7 +50,9 @@ export default function LayoutShell({ route, session, onLogout, children }) {
       )}
 
       {/* Drawer for tablet/mobile */}
-      {!isDesktop && <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} onLogout={onLogout} />}
+      {!isDesktop && isAuthenticated && (
+        <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} onLogout={onLogout} />
+      )}
 
       <motion.main
         className="min-h-screen relative"
@@ -57,12 +60,12 @@ export default function LayoutShell({ route, session, onLogout, children }) {
         animate={{ paddingLeft: contentPaddingLeft }}
         transition={{ type: 'spring', stiffness: 320, damping: 40 }}
       >
-        <div className={`${!isDesktop ? 'pt-14 pb-16' : 'pb-0'}`}>
+        <div className={`${(!isDesktop && isAuthenticated) ? 'pt-14 pb-16' : 'pb-0'}`}>
           {children}
         </div>
       </motion.main>
 
-      {!isTablet && <BottomNav route={route} />}
+      {!isTablet && isAuthenticated && <BottomNav route={route} />}
     </div>
   );
 }
