@@ -115,6 +115,9 @@ export default function AccountSettings() {
 
   const handleSignOut = async () => {
     try {
+      // Clear policy acceptance when signing out
+      localStorage.removeItem('acceptedTerms');
+      localStorage.removeItem('acceptedPrivacy');
       await supabase.auth.signOut();
       window.location.hash = '#/';
     } catch (err) {

@@ -29,8 +29,12 @@ export default function Profile() {
   });
   const [originalProfile, setOriginalProfile] = useState(null);
   const [showIndustrySuggestions, setShowIndustrySuggestions] = useState(false);
-  const [acceptedTerms, setAcceptedTerms] = useState(false);
-  const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(() => {
+    return localStorage.getItem('acceptedTerms') === 'true';
+  });
+  const [acceptedPrivacy, setAcceptedPrivacy] = useState(() => {
+    return localStorage.getItem('acceptedPrivacy') === 'true';
+  });
 
   // Check if there are unsaved changes
   const hasChanges = () => {
@@ -177,6 +181,18 @@ export default function Profile() {
     setProfile({ ...profile, industry });
     setShowIndustrySuggestions(false);
   };
+
+  const handleTermsAcceptance = (accepted) => {
+    setAcceptedTerms(accepted);
+    localStorage.setItem('acceptedTerms', accepted.toString());
+  };
+
+  const handlePrivacyAcceptance = (accepted) => {
+    setAcceptedPrivacy(accepted);
+    localStorage.setItem('acceptedPrivacy', accepted.toString());
+  };
+
+
 
   if (loading) {
     return (
@@ -334,7 +350,7 @@ export default function Profile() {
                     type="checkbox"
                     id="terms"
                     checked={acceptedTerms}
-                    onChange={(e) => setAcceptedTerms(e.target.checked)}
+                    onChange={(e) => handleTermsAcceptance(e.target.checked)}
                     className="mt-1 h-4 w-4 text-accent-600 focus:ring-accent-500 border-gray-300 rounded"
                     required
                   />
@@ -355,7 +371,7 @@ export default function Profile() {
                     type="checkbox"
                     id="privacy"
                     checked={acceptedPrivacy}
-                    onChange={(e) => setAcceptedPrivacy(e.target.checked)}
+                    onChange={(e) => handlePrivacyAcceptance(e.target.checked)}
                     className="mt-1 h-4 w-4 text-accent-600 focus:ring-accent-500 border-gray-300 rounded"
                     required
                   />
