@@ -55,18 +55,11 @@ function App() {
           const p = data?.data || {};
           const missing = !p.current_role || !p.experience_level || !p.industry;
           setMustOnboard(missing);
-          if (missing) {
-            localStorage.setItem('onboarding_gate', '1');
-            window.location.hash = '#/profile';
-          } else {
-            localStorage.removeItem('onboarding_gate');
-          }
         } catch (_) {
           setMustOnboard(false);
         }
       } else {
         setMustOnboard(false);
-        localStorage.removeItem('onboarding_gate');
       }
     });
     return () => subscription?.unsubscribe?.();
@@ -107,7 +100,7 @@ function App() {
   };
 
   return (
-    <LayoutShell route={route} session={session} onLogout={handleLogout}>
+    <LayoutShell route={route} session={session} onLogout={handleLogout} needsOnboarding={mustOnboard}>
       {renderContent()}
     </LayoutShell>
   );

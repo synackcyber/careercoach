@@ -5,7 +5,7 @@ import { useMediaQuery } from '../hooks/useMediaQuery';
 import DesktopNav, { getDesktopNavWidth } from './DesktopNav';
 import { motion } from 'framer-motion';
 
-export default function LayoutShell({ route, session, onLogout, children }) {
+export default function LayoutShell({ route, session, onLogout, needsOnboarding, children }) {
   const isDesktop = useMediaQuery('(min-width: 1024px)');
   const isTablet = useMediaQuery('(min-width: 640px)');
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -61,6 +61,16 @@ export default function LayoutShell({ route, session, onLogout, children }) {
         transition={{ type: 'spring', stiffness: 320, damping: 40 }}
       >
         <div className={`${(!isDesktop && isAuthenticated) ? 'pt-14 pb-16' : 'pb-0'}`}>
+          {isAuthenticated && needsOnboarding && route !== '#/profile' && (
+            <div className="px-6 pt-4">
+              <div className="max-w-7xl mx-auto">
+                <div className="rounded-xl bg-yellow-50 border border-yellow-200 p-4 flex items-center justify-between">
+                  <div className="text-sm text-yellow-900">Complete your profile to personalize your goals.</div>
+                  <button className="btn-wire" onClick={() => { window.location.hash = '#/profile'; }}>Complete profile</button>
+                </div>
+              </div>
+            </div>
+          )}
           {children}
         </div>
       </motion.main>
