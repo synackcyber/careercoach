@@ -3,6 +3,7 @@ package handlers
 import (
     "net/http"
     "strconv"
+    "time"
     "goaltracker/database"
     "goaltracker/models"
     "goaltracker/services"
@@ -28,6 +29,8 @@ type updateProfilePayload struct {
     CareerGoals        *string `json:"career_goals,omitempty"`
     CurrentTools       *string `json:"current_tools,omitempty"`
     SkillGaps          *string `json:"skill_gaps,omitempty"`
+    AcceptTerms        *bool   `json:"accept_terms,omitempty"`
+    AcceptPrivacy      *bool   `json:"accept_privacy,omitempty"`
 }
 
 var expLevels = map[string]struct{}{ "entry":{}, "junior":{}, "mid":{}, "senior":{}, "lead":{}, "expert":{} }
@@ -169,6 +172,21 @@ func UpdateUserProfile(c *gin.Context) {
     if p.CareerGoals != nil { profile.CareerGoals = *p.CareerGoals }
     if p.CurrentTools != nil { profile.CurrentTools = *p.CurrentTools }
     if p.SkillGaps != nil { profile.SkillGaps = *p.SkillGaps }
+    
+    // Handle policy acceptance
+    if p.AcceptTerms != nil && *p.AcceptTerms {
+        now := time.Now()
+        profile.TermsAcceptedAt = &now
+        profile.PoliciesVersion = "1.0" // Set current version
+    }
+    if p.AcceptPrivacy != nil && *p.AcceptPrivacy {
+        now := time.Now()
+        profile.PrivacyAcceptedAt = &now
+        if profile.PoliciesVersion == "" {
+            profile.PoliciesVersion = "1.0" // Set current version if not set
+        }
+    }
+    
     profile.UserID = userID
     if err := database.DB.Save(&profile).Error; err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user profile"})

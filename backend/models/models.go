@@ -83,6 +83,9 @@ type UserProfile struct {
 	CareerGoals       string `json:"career_goals"`
 	CurrentTools      string `json:"current_tools"` // JSON array of current tool IDs
 	SkillGaps         string `json:"skill_gaps"`    // JSON array of identified gaps
+	TermsAcceptedAt   *time.Time `json:"terms_accepted_at"`
+	PrivacyAcceptedAt *time.Time `json:"privacy_accepted_at"`
+	PoliciesVersion   string     `json:"policies_version" gorm:"default:'1.0'"`
 	CreatedAt         time.Time `json:"created_at"`
 	UpdatedAt         time.Time `json:"updated_at"`
 }

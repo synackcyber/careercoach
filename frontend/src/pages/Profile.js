@@ -106,6 +106,16 @@ export default function Profile() {
         };
         setProfile(profileData);
         setOriginalProfile(profileData); // Store original for change detection
+        
+        // Check if policies were already accepted in database
+        if (p.terms_accepted_at) {
+          setAcceptedTerms(true);
+          localStorage.setItem('acceptedTerms', 'true');
+        }
+        if (p.privacy_accepted_at) {
+          setAcceptedPrivacy(true);
+          localStorage.setItem('acceptedPrivacy', 'true');
+        }
       } catch (e) {
         if (!isMounted) return;
         try { console.error('[profile] fetch error', e); } catch (_) {}
@@ -162,6 +172,8 @@ export default function Profile() {
         current_role: profile.current_role,
         experience_level: profile.experience_level,
         industry: profile.industry,
+        accept_terms: acceptedTerms,
+        accept_privacy: acceptedPrivacy,
       });
       // Update original profile to reflect saved state
       setOriginalProfile({ ...profile });
