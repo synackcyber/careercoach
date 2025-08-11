@@ -13,6 +13,8 @@ export default function AccountSettings() {
   const [newDisplayName, setNewDisplayName] = useState('');
   const [showEmailForm, setShowEmailForm] = useState(false);
   const [showDisplayNameForm, setShowDisplayNameForm] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -22,6 +24,41 @@ export default function AccountSettings() {
           setUser(user);
           setEmail(user.email || '');
           setDisplayName(user.user_metadata?.display_name || '');
+          
+          // Load policy acceptance from localStorage
+          const storedTerms = localStorage.getItem('acceptedTerms') === 'true';
+          const storedPrivacy = localStorage.getItem('acceptedPrivacy') === 'true';
+          setAcceptedTerms(storedTerms);
+          setAcceptedPrivacy(storedPrivacy);
+          
+          // Check database for policy acceptance
+          try {
+            const token = await getAccessToken();
+            if (token) {
+              const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8080'}/api/v1/profiles/me`, {
+                headers: {
+                  'Authorization': `Bearer ${token}`
+                }
+              });
+              
+              if (response.ok) {
+                const result = await response.json();
+                const profile = result?.data?.data;
+                if (profile) {
+                  if (profile.terms_accepted_at) {
+                    setAcceptedTerms(true);
+                    localStorage.setItem('acceptedTerms', 'true');
+                  }
+                  if (profile.privacy_accepted_at) {
+                    setAcceptedPrivacy(true);
+                    localStorage.setItem('acceptedPrivacy', 'true');
+                  }
+                }
+              }
+            }
+          } catch (err) {
+            console.error('Failed to check database policy status:', err);
+          }
         }
       } catch (err) {
         console.error('Error fetching user:', err);
@@ -83,6 +120,66 @@ export default function AccountSettings() {
       setError('Failed to update display name. Please try again.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleTermsAcceptance = async (accepted) => {
+    setAcceptedTerms(accepted);
+    localStorage.setItem('acceptedTerms', accepted.toString());
+    
+    // Update database if user has a profile
+    if (accepted) {
+      try {
+        const token = await getAccessToken();
+        if (token) {
+          const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8080'}/api/v1/profiles/me`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              accept_terms: true
+            })
+          });
+          
+          if (response.ok) {
+            setSuccess('Terms of Service accepted successfully!');
+          }
+        }
+      } catch (err) {
+        console.error('Failed to update terms acceptance:', err);
+      }
+    }
+  };
+
+  const handlePrivacyAcceptance = async (accepted) => {
+    setAcceptedPrivacy(accepted);
+    localStorage.setItem('acceptedPrivacy', accepted.toString());
+    
+    // Update database if user has a profile
+    if (accepted) {
+      try {
+        const token = await getAccessToken();
+        if (token) {
+          const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8080'}/api/v1/profiles/me`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              accept_privacy: true
+            })
+          });
+          
+          if (response.ok) {
+            setSuccess('Privacy Policy accepted successfully!');
+          }
+        }
+      } catch (err) {
+        console.error('Failed to update privacy acceptance:', err);
+      }
     }
   };
 
@@ -259,6 +356,70 @@ export default function AccountSettings() {
                 </div>
               </form>
             )}
+          </div>
+        </div>
+
+        {/* Legal Agreements */}
+        <div className="rounded-2xl shadow-card ring-1 ring-black/5 bg-white/85 dark:bg-zinc-900/70 backdrop-blur p-8 mb-8">
+          <h2 className="text-2xl font-semibold text-gray-900 dark:text-zinc-100 mb-6">Legal Agreements</h2>
+          
+          <div className="space-y-6">
+            <div className="space-y-4">
+              <div className="flex items-start space-x-3">
+                <input
+                  type="checkbox"
+                  id="terms"
+                  checked={acceptedTerms}
+                  onChange={(e) => handleTermsAcceptance(e.target.checked)}
+                  className="mt-1 h-5 w-5 text-accent-600 focus:ring-accent-500 border-gray-300 rounded"
+                  required
+                />
+                <label htmlFor="terms" className="text-sm text-gray-700 dark:text-zinc-300">
+                  I agree to the{' '}
+                  <a
+                    href="/terms"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-accent-600 hover:text-accent-500 underline"
+                  >
+                    Terms of Service
+                  </a>
+                </label>
+              </div>
+              
+              <div className="flex items-start space-x-3">
+                <input
+                  type="checkbox"
+                  id="privacy"
+                  checked={acceptedPrivacy}
+                  onChange={(e) => handlePrivacyAcceptance(e.target.checked)}
+                  className="mt-1 h-5 w-5 text-accent-600 focus:ring-accent-500 border-gray-300 rounded"
+                  required
+                />
+                <label htmlFor="privacy" className="text-sm text-gray-700 dark:text-zinc-300">
+                  I agree to the{' '}
+                  <a
+                    href="/privacy"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-accent-600 hover:text-accent-500 underline"
+                  >
+                    Privacy Policy
+                  </a>
+                </label>
+              </div>
+            </div>
+            
+            <div className="pt-4 border-t border-gray-200 dark:border-zinc-700">
+              <p className="text-sm text-gray-600 dark:text-zinc-400">
+                You must accept these agreements to use our service. Your acceptance is recorded and stored securely.
+                {acceptedTerms && acceptedPrivacy && (
+                  <span className="block mt-2 text-green-600 dark:text-green-400 font-medium">
+                    ✓ All agreements accepted
+                  </span>
+                )}
+              </p>
+            </div>
           </div>
         </div>
 

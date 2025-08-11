@@ -160,24 +160,28 @@ export default function Profile() {
     try {
       setError('');
       setSaving(true);
+      
+      // Check if policies are accepted before allowing profile updates
+      if (!arePoliciesAccepted()) {
+        setError('Please accept the Terms of Service and Privacy Policy in Account Settings before updating your profile');
+        return;
+      }
+      
       if (!profile.current_role || !profile.experience_level || !profile.industry) {
         setError('Please complete all required fields');
         return;
       }
-      if (!acceptedTerms || !acceptedPrivacy) {
-        setError('Please accept the Terms of Service and Privacy Policy');
-        return;
-      }
+      
       await userProfileApi.update(profile.id, {
         current_role: profile.current_role,
         experience_level: profile.experience_level,
         industry: profile.industry,
-        accept_terms: acceptedTerms,
-        accept_privacy: acceptedPrivacy,
       });
+      
       // Update original profile to reflect saved state
       setOriginalProfile({ ...profile });
       localStorage.removeItem('onboarding_gate');
+      
       // Only redirect if this was a new profile completion
       if (!originalProfile?.current_role || !originalProfile?.experience_level || !originalProfile?.industry) {
         window.location.hash = '#/';
@@ -194,15 +198,7 @@ export default function Profile() {
     setShowIndustrySuggestions(false);
   };
 
-  const handleTermsAcceptance = (accepted) => {
-    setAcceptedTerms(accepted);
-    localStorage.setItem('acceptedTerms', accepted.toString());
-  };
 
-  const handlePrivacyAcceptance = (accepted) => {
-    setAcceptedPrivacy(accepted);
-    localStorage.setItem('acceptedPrivacy', accepted.toString());
-  };
 
 
 
@@ -240,7 +236,7 @@ export default function Profile() {
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-gray-700 dark:text-zinc-300">Profile Completion</span>
             <span className="text-sm text-gray-500 dark:text-zinc-400">
-              {[profile.current_role, profile.experience_level, profile.industry].filter(Boolean).length}/3 + Policies
+              {[profile.current_role, profile.experience_level, profile.industry].filter(Boolean).length}/3
             </span>
           </div>
           <div className="w-full bg-gray-200 dark:bg-zinc-700 rounded-full h-2">
@@ -350,59 +346,35 @@ export default function Profile() {
               <p className="text-sm text-gray-500 dark:text-zinc-400">We'll use this to suggest industry-relevant goals</p>
             </div>
 
-            {/* Policy Acceptance */}
+            {/* Policy Status */}
             <div className="space-y-3">
               <label className="block">
-                <span className="text-lg font-semibold text-gray-900 dark:text-zinc-100">Legal Agreements</span>
-                <span className="text-red-500 ml-1">*</span>
+                <span className="text-lg font-semibold text-gray-900 dark:text-zinc-100">Legal Agreements Status</span>
               </label>
               <div className="space-y-3">
-                <div className="flex items-start space-x-3">
-                  <input
-                    type="checkbox"
-                    id="terms"
-                    checked={acceptedTerms}
-                    onChange={(e) => handleTermsAcceptance(e.target.checked)}
-                    className="mt-1 h-4 w-4 text-accent-600 focus:ring-accent-500 border-gray-300 rounded"
-                    required
-                  />
-                  <label htmlFor="terms" className="text-sm text-gray-700 dark:text-zinc-300">
-                    I agree to the{' '}
-                    <a 
-                      href="/terms" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-accent-600 hover:text-accent-500 underline"
-                    >
-                      Terms of Service
-                    </a>
-                  </label>
-                </div>
-                <div className="flex items-start space-x-3">
-                  <input
-                    type="checkbox"
-                    id="privacy"
-                    checked={acceptedPrivacy}
-                    onChange={(e) => handlePrivacyAcceptance(e.target.checked)}
-                    className="mt-1 h-4 w-4 text-accent-600 focus:ring-accent-500 border-gray-300 rounded"
-                    required
-                  />
-                  <label htmlFor="privacy" className="text-sm text-gray-700 dark:text-zinc-300">
-                    I agree to the{' '}
-                    <a 
-                      href="/privacy" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-accent-600 hover:text-accent-500 underline"
-                    >
-                      Privacy Policy
-                    </a>
-                  </label>
-                </div>
-              </div>
-              <p className="text-sm text-gray-500 dark:text-zinc-400">
-                You must accept these agreements to use our service
-              </p>
+                {arePoliciesAccepted() ? (
+                  <div className="flex items-center space-x-3 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                    <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span className="text-green-800 dark:text-green-200 font-medium">All legal agreements accepted</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center space-x-3 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                    <svg className="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                    <div>
+                      <span className="text-amber-800 dark:text-amber-200 font-medium">Legal agreements required</span>
+                      <p className="text-amber-700 dark:text-amber-300 text-sm mt-1">
+                        Please accept the Terms of Service and Privacy Policy in{' '}
+                        <a href="#/account" className="text-amber-800 dark:text-amber-200 underline font-medium">Account Settings</a>{' '}
+                        before completing your profile.
+                      </p>
+                    </div>
+                  </div>
+                )}
+                
             </div>
 
             {/* Submit Button - Only show when there are changes or profile is incomplete */}
