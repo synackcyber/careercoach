@@ -11,7 +11,7 @@ function Badge({ children }) {
 const overlayVariants = { hidden: { opacity: 0 }, visible: { opacity: 1 }, exit: { opacity: 0 } };
 const drawerVariants = { hidden: { x: -24, opacity: 0 }, visible: { x: 0, opacity: 1, transition: { type: 'spring', stiffness: 420, damping: 36 } }, exit: { x: -24, opacity: 0, transition: { duration: 0.18 } } };
 
-export default function Sidebar({ open, onClose }) {
+export default function Sidebar({ open, onClose, onLogout }) {
   const navTo = (hash) => (e) => { e.preventDefault(); window.location.hash = hash; onClose?.(); };
   const onNewGoal = (e) => { e.preventDefault(); window.location.hash = '#/new-goal'; onClose?.(); };
 
@@ -44,11 +44,15 @@ export default function Sidebar({ open, onClose }) {
                 ))}
               </nav>
 
-              <div className="border-t px-3 py-3">
+              <div className="border-t px-3 py-3 space-y-2">
                 <a href="#/profile" onClick={navTo('#/profile')} className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-100">
                   <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-zinc-200 text-zinc-700 text-xs font-semibold">M</span>
                   <span className="font-medium">Profile</span>
                 </a>
+                <button onClick={() => { onLogout?.(); onClose?.(); }} className="flex w-full items-center gap-3 px-3 py-2 rounded-xl hover:bg-red-50 text-red-700">
+                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-red-100 text-red-700 text-xs font-semibold">⎋</span>
+                  <span className="font-medium">Logout</span>
+                </button>
               </div>
             </div>
           </motion.aside>

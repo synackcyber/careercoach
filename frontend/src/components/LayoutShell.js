@@ -33,6 +33,7 @@ export default function LayoutShell({ route, session, onLogout, children }) {
           expanded={desktopExpanded}
           onToggle={() => setDesktopExpanded(v => !v)}
           route={route}
+          onLogout={onLogout}
         />
       )}
 
@@ -48,7 +49,7 @@ export default function LayoutShell({ route, session, onLogout, children }) {
       )}
 
       {/* Drawer for tablet/mobile */}
-      {!isDesktop && <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />}
+      {!isDesktop && <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} onLogout={onLogout} />}
 
       <motion.main
         className="min-h-screen relative"
