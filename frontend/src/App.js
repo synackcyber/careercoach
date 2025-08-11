@@ -78,7 +78,7 @@ function App() {
   };
 
   const renderContent = () => {
-    if (route === '#/auth/callback') {
+    if ((route || '').startsWith('#/auth/callback')) {
       return <Callback />;
     }
 
