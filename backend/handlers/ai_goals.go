@@ -91,11 +91,12 @@ func GetOrCreateMyProfile(c *gin.Context) {
                     return
                 }
             }
-            c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user profile"})
+            // log and include reason in dev response
+            c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user profile", "reason": err2.Error()})
             return
         }
         // Ensure we return the row (whether created or pre-existing)
-        database.DB.Where("user_id = ?", userID).First(&profile)
+        _ = database.DB.Where("user_id = ?", userID).First(&profile).Error
     }
 
     c.JSON(http.StatusOK, gin.H{"data": profile})
