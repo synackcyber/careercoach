@@ -35,8 +35,9 @@ api.interceptors.request.use(async (config) => {
       config.headers.Authorization = `Bearer ${token}`;
     }
   } catch (e) {
-    // ignore
+    try { console.warn('[api] failed to get token', e); } catch (_) {}
   }
+  try { console.debug('[api] request', config.method?.toUpperCase(), config.baseURL + (config.url || '')); } catch (_) {}
   return config;
 });
 

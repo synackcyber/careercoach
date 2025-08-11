@@ -4,7 +4,7 @@ import { getAccessToken, onAuthStateChange } from '../supabase/authClient';
 
 export const useGoals = (filters = {}) => {
   const [goals, setGoals] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const fetchGoals = async () => {
@@ -72,6 +72,7 @@ export const useGoals = (filters = {}) => {
     const checkAuthAndFetch = async () => {
       const token = await getAccessToken();
       if (token) {
+        setLoading(true);
         fetchGoals();
       } else {
         setLoading(false);
