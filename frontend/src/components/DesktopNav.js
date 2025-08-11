@@ -107,6 +107,10 @@ export default function DesktopNav({ expanded, onToggle, route, onLogout }) {
           <span className="inline-flex w-6 h-6 aspect-square items-center justify-center rounded-full bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-100 text-[11px] font-semibold select-none">M</span>
           <motion.span initial={false} animate={{ opacity: expanded ? 1 : 0, x: expanded ? 0 : -6 }} transition={{ duration: 0.16 }} className={`overflow-hidden whitespace-nowrap transition-[max-width] duration-200 ${expanded ? 'max-w-[220px]' : 'max-w-0'}`}>Profile</motion.span>
         </button>
+        <button onClick={navTo('#/account')} className={`w-full flex items-center ${expanded ? 'gap-3 px-3 justify-start' : 'px-0 justify-center'} h-10 py-0 rounded-xl hover:bg-gray-100 dark:hover:bg-zinc-800`}>
+          <span className="inline-flex w-6 h-6 aspect-square items-center justify-center rounded-full bg-blue-200 dark:bg-blue-700 text-blue-700 dark:text-blue-100 text-[12px] select-none">⚙️</span>
+          <motion.span initial={false} animate={{ opacity: expanded ? 1 : 0, x: expanded ? 0 : -6 }} transition={{ duration: 0.16 }} className={`overflow-hidden whitespace-nowrap transition-[max-width] duration-200 ${expanded ? 'max-w-[220px]' : 'max-w-0'}`}>Account</motion.span>
+        </button>
         <button onClick={onLogout} className={`w-full flex items-center ${expanded ? 'gap-3 px-3 justify-start' : 'px-0 justify-center'} h-10 py-0 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 text-red-700 dark:text-red-300`}>
           <span className="inline-flex w-6 h-6 aspect-square items-center justify-center rounded-full bg-red-100 dark:bg-red-800/50 text-red-700 dark:text-red-200 text-[12px] select-none">⎋</span>
           <motion.span initial={false} animate={{ opacity: expanded ? 1 : 0, x: expanded ? 0 : -6 }} transition={{ duration: 0.16 }} className={`overflow-hidden whitespace-nowrap transition-[max-width] duration-200 ${expanded ? 'max-w-[220px]' : 'max-w-0'}`}>Logout</motion.span>

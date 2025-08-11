@@ -49,6 +49,10 @@ export default function Sidebar({ open, onClose, onLogout }) {
                   <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-zinc-200 text-zinc-700 text-xs font-semibold">M</span>
                   <span className="font-medium">Profile</span>
                 </a>
+                <a href="#/account" onClick={navTo('#/account')} className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-100">
+                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-blue-200 text-blue-700 text-xs font-semibold">⚙️</span>
+                  <span className="font-medium">Account</span>
+                </a>
                 <button onClick={() => { onLogout?.(); onClose?.(); }} className="flex w-full items-center gap-3 px-3 py-2 rounded-xl hover:bg-red-50 text-red-700">
                   <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-red-100 text-red-700 text-xs font-semibold">⎋</span>
                   <span className="font-medium">Logout</span>

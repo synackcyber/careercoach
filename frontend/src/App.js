@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Dashboard from './pages/Dashboard';
 import TimelineVertical from './pages/TimelineVertical';
 import Profile from './pages/Profile';
+import AccountSettings from './pages/AccountSettings';
 import NewGoal from './pages/NewGoal';
 import Admin from './pages/Admin';
 import Login from './auth/Login';
@@ -90,6 +91,8 @@ function App() {
         return <TimelineVertical />;
       case '#/profile':
         return <Profile />;
+      case '#/account':
+        return <AccountSettings />;
       case '#/new-goal':
         return <NewGoal />;
       case '#/admin':

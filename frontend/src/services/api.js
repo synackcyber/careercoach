@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { getAccessToken } from '../supabase/authClient';
+import { getAccessToken, onAuthStateChange, supabase } from '../supabase/authClient';
 
 let API_BASE_URL = process.env.REACT_APP_API_URL || '/api/v1';
 try {
@@ -18,6 +18,11 @@ if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' |
   try { console.debug('[api] baseURL =', API_BASE_URL); } catch (_) {}
 }
 
+// Cache bearer token and update via auth events for reliability
+let bearerToken = null;
+try { supabase?.auth?.getSession?.().then(({ data }) => { bearerToken = data?.session?.access_token || null; }); } catch (_) {}
+try { onAuthStateChange?.((session) => { bearerToken = session?.access_token || null; }); } catch (_) {}
+
 const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 15000,
@@ -29,11 +34,15 @@ const api = axios.create({
 // Attach Authorization header if user is logged in
 api.interceptors.request.use(async (config) => {
   try {
-    // Avoid blocking requests indefinitely on auth; cap token retrieval time
-    const token = await Promise.race([
-      getAccessToken(),
-      new Promise((resolve) => setTimeout(() => resolve(null), 700)),
-    ]);
+    // Prefer cached token; fallback to quick lookup
+    let token = bearerToken;
+    if (!token) {
+      token = await Promise.race([
+        getAccessToken(),
+        new Promise((resolve) => setTimeout(() => resolve(null), 500)),
+      ]);
+      if (token) bearerToken = token;
+    }
     if (token) {
       config.headers = config.headers || {};
       config.headers.Authorization = `Bearer ${token}`;
