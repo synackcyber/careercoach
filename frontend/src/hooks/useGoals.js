@@ -17,7 +17,9 @@ export const useGoals = (filters = {}) => {
       }
 
       setLoading(true);
+      try { console.debug('[goals] fetching with filters =', filters); } catch (_) {}
       const response = await goalApi.getAll(filters);
+      try { console.debug('[goals] response items =', Array.isArray(response?.data?.data) ? response.data.data.length : 'n/a'); } catch (_) {}
       if (!response?.data?.data) {
         throw new Error('Empty goals response');
       }
@@ -28,6 +30,7 @@ export const useGoals = (filters = {}) => {
       console.error('Error fetching goals:', err);
     } finally {
       setLoading(false);
+      try { console.debug('[goals] loading = false'); } catch (_) {}
     }
   };
 

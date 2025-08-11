@@ -28,6 +28,11 @@ const Dashboard = () => {
     return () => window.removeEventListener('open-new-goal', handler);
   }, []);
 
+  // Debug dashboard state
+  useEffect(() => {
+    try { console.debug('[dashboard] goals length =', goals.length, 'loading =', loading, 'error =', error); } catch (_) {}
+  }, [goals, loading, error]);
+
 
   const filteredGoals = goals.filter(goal =>
     goal.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
