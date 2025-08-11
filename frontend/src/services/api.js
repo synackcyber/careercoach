@@ -1,10 +1,19 @@
 import axios from 'axios';
 import { getAccessToken } from '../supabase/authClient';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || '/api/v1';
+let API_BASE_URL = process.env.REACT_APP_API_URL || '/api/v1';
+try {
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    if ((host === 'localhost' || host === '127.0.0.1') && (!process.env.REACT_APP_API_URL || process.env.REACT_APP_API_URL.includes('backend'))) {
+      API_BASE_URL = 'http://localhost:8080/api/v1';
+    }
+  }
+} catch (_) {}
 
 const api = axios.create({
   baseURL: API_BASE_URL,
+  timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
   },
