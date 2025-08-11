@@ -52,45 +52,48 @@ export default function DesktopNav({ expanded, onToggle, route, onLogout }) {
         </motion.div>
       </div>
 
-      {/* Unified nav list (includes New goal as first item) */}
-      <div className={`flex-1 ${expanded ? 'overflow-auto' : 'overflow-hidden'}`}>
-        <nav className="px-2 py-3 space-y-1">
-          {/* New goal lives here to keep icon order stable */}
-          <button
-            onClick={onNewGoal}
-            className={`w-full flex items-center ${expanded ? 'gap-3 px-3 justify-start' : 'px-0 justify-center'} h-10 py-0 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-800`}
-          >
-            <span className="w-6 h-6 aspect-square inline-flex items-center justify-center shrink-0 rounded-full bg-gradient-to-b from-accent-500 to-accent-600 text-white text-[12px] leading-none select-none ring-1 ring-black/10 shadow-md shadow-accent-600/25">+</span>
-            <motion.span
-              initial={false}
-              animate={{ opacity: expanded ? 1 : 0, x: expanded ? 0 : -6 }}
-              transition={{ duration: 0.16 }}
-              className={`overflow-hidden whitespace-nowrap transition-[max-width] duration-200 ${expanded ? 'max-w-[220px]' : 'max-w-0'}`}
-            >
-              New goal
-            </motion.span>
-          </button>
-
-          {navItems.map(item => (
+      {/* Main content area with flex layout */}
+      <div className="flex-1 flex flex-col">
+        {/* Unified nav list (includes New goal as first item) */}
+        <div className={`flex-1 ${expanded ? 'overflow-auto' : 'overflow-hidden'}`}>
+          <nav className="px-2 py-3 space-y-1">
+            {/* New goal lives here to keep icon order stable */}
             <button
-              key={item.key}
-              onClick={navTo(item.hash)}
-              className={`w-full flex items-center ${expanded ? 'gap-3 px-3 justify-start' : 'px-0 justify-center'} h-10 py-0 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-800 ${route === item.hash ? 'bg-gray-100 dark:bg-zinc-800/80' : ''}`}
+              onClick={onNewGoal}
+              className={`w-full flex items-center ${expanded ? 'gap-3 px-3 justify-start' : 'px-0 justify-center'} h-10 py-0 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-800`}
             >
-              <span className="w-6 h-6 aspect-square inline-flex items-center justify-center shrink-0 select-none">
-                {item.icon('w-5 h-5')}
-              </span>
+              <span className="w-6 h-6 aspect-square inline-flex items-center justify-center shrink-0 rounded-full bg-gradient-to-b from-accent-500 to-accent-600 text-white text-[12px] leading-none select-none ring-1 ring-black/10 shadow-md shadow-accent-600/25">+</span>
               <motion.span
                 initial={false}
                 animate={{ opacity: expanded ? 1 : 0, x: expanded ? 0 : -6 }}
                 transition={{ duration: 0.16 }}
                 className={`overflow-hidden whitespace-nowrap transition-[max-width] duration-200 ${expanded ? 'max-w-[220px]' : 'max-w-0'}`}
               >
-                {item.title}
+                New goal
               </motion.span>
             </button>
-          ))}
-        </nav>
+
+            {navItems.map(item => (
+              <button
+                key={item.key}
+                onClick={navTo(item.hash)}
+                className={`w-full flex items-center ${expanded ? 'gap-3 px-3 justify-start' : 'px-0 justify-center'} h-10 py-0 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-800 ${route === item.hash ? 'bg-gray-100 dark:bg-zinc-800/80' : ''}`}
+              >
+                <span className="w-6 h-6 aspect-square inline-flex items-center justify-center shrink-0 select-none">
+                  {item.icon('w-5 h-5')}
+                </span>
+                <motion.span
+                  initial={false}
+                  animate={{ opacity: expanded ? 1 : 0, x: expanded ? 0 : -6 }}
+                  transition={{ duration: 0.16 }}
+                  className={`overflow-hidden whitespace-nowrap transition-[max-width] duration-200 ${expanded ? 'max-w-[220px]' : 'max-w-0'}`}
+                >
+                  {item.title}
+                </motion.span>
+              </button>
+            ))}
+          </nav>
+        </div>
       </div>
 
       {/* Footer */}
