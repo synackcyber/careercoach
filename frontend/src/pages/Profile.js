@@ -29,6 +29,8 @@ export default function Profile() {
   });
   const [originalProfile, setOriginalProfile] = useState(null);
   const [showIndustrySuggestions, setShowIndustrySuggestions] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
 
   // Check if there are unsaved changes
   const hasChanges = () => {
@@ -45,10 +47,21 @@ export default function Profile() {
     return profile.current_role && profile.experience_level && profile.industry;
   };
 
+  // Check if policies are accepted
+  const arePoliciesAccepted = () => {
+    return acceptedTerms && acceptedPrivacy;
+  };
+
+  // Check if everything is complete (profile + policies)
+  const isEverythingComplete = () => {
+    return isProfileComplete() && arePoliciesAccepted();
+  };
+
   // Get button text based on current state
   const getButtonText = () => {
     if (saving) return 'Saving...';
     if (!isProfileComplete()) return 'Complete Profile to Continue';
+    if (!arePoliciesAccepted()) return 'Accept Policies to Continue';
     if (!hasChanges()) return 'Profile Complete ✓';
     if (originalProfile?.id) return 'Update Profile';
     return 'Save Profile';
@@ -58,6 +71,7 @@ export default function Profile() {
   const getButtonState = () => {
     if (saving) return 'saving';
     if (!isProfileComplete()) return 'incomplete';
+    if (!arePoliciesAccepted()) return 'policies';
     if (!hasChanges()) return 'complete';
     return 'hasChanges';
   };
@@ -136,6 +150,10 @@ export default function Profile() {
         setError('Please complete all required fields');
         return;
       }
+      if (!acceptedTerms || !acceptedPrivacy) {
+        setError('Please accept the Terms of Service and Privacy Policy');
+        return;
+      }
       await userProfileApi.update(profile.id, {
         current_role: profile.current_role,
         experience_level: profile.experience_level,
@@ -194,14 +212,14 @@ export default function Profile() {
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-gray-700 dark:text-zinc-300">Profile Completion</span>
             <span className="text-sm text-gray-500 dark:text-zinc-400">
-              {[profile.current_role, profile.experience_level, profile.industry].filter(Boolean).length}/3
+              {[profile.current_role, profile.experience_level, profile.industry].filter(Boolean).length}/3 + Policies
             </span>
           </div>
           <div className="w-full bg-gray-200 dark:bg-zinc-700 rounded-full h-2">
             <div 
               className="bg-accent-500 h-2 rounded-full transition-all duration-500 ease-out"
               style={{ 
-                width: `${([profile.current_role, profile.experience_level, profile.industry].filter(Boolean).length / 3) * 100}%` 
+                width: `${(isEverythingComplete() ? 100 : ([profile.current_role, profile.experience_level, profile.industry].filter(Boolean).length / 3) * 75)}%` 
               }}
             ></div>
           </div>
@@ -304,14 +322,69 @@ export default function Profile() {
               <p className="text-sm text-gray-500 dark:text-zinc-400">We'll use this to suggest industry-relevant goals</p>
             </div>
 
+            {/* Policy Acceptance */}
+            <div className="space-y-3">
+              <label className="block">
+                <span className="text-lg font-semibold text-gray-900 dark:text-zinc-100">Legal Agreements</span>
+                <span className="text-red-500 ml-1">*</span>
+              </label>
+              <div className="space-y-3">
+                <div className="flex items-start space-x-3">
+                  <input
+                    type="checkbox"
+                    id="terms"
+                    checked={acceptedTerms}
+                    onChange={(e) => setAcceptedTerms(e.target.checked)}
+                    className="mt-1 h-4 w-4 text-accent-600 focus:ring-accent-500 border-gray-300 rounded"
+                    required
+                  />
+                  <label htmlFor="terms" className="text-sm text-gray-700 dark:text-zinc-300">
+                    I agree to the{' '}
+                    <a 
+                      href="/terms" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-accent-600 hover:text-accent-500 underline"
+                    >
+                      Terms of Service
+                    </a>
+                  </label>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <input
+                    type="checkbox"
+                    id="privacy"
+                    checked={acceptedPrivacy}
+                    onChange={(e) => setAcceptedPrivacy(e.target.checked)}
+                    className="mt-1 h-4 w-4 text-accent-600 focus:ring-accent-500 border-gray-300 rounded"
+                    required
+                  />
+                  <label htmlFor="privacy" className="text-sm text-gray-700 dark:text-zinc-300">
+                    I agree to the{' '}
+                    <a 
+                      href="/privacy" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-accent-600 hover:text-accent-500 underline"
+                    >
+                      Privacy Policy
+                    </a>
+                  </label>
+                </div>
+              </div>
+              <p className="text-sm text-gray-500 dark:text-zinc-400">
+                You must accept these agreements to use our service
+              </p>
+            </div>
+
             {/* Submit Button - Only show when there are changes or profile is incomplete */}
-            {(buttonState === 'hasChanges' || buttonState === 'incomplete') && (
+            {(buttonState === 'hasChanges' || buttonState === 'incomplete' || buttonState === 'policies') && (
               <div className="pt-6">
                 <button
                   type="submit"
-                  disabled={saving || !isProfileComplete()}
+                  disabled={saving || !isEverythingComplete()}
                   className={`w-full py-4 px-8 rounded-xl text-lg font-semibold transition-all duration-200 ${
-                    saving || !isProfileComplete()
+                    saving || !isEverythingComplete()
                       ? 'bg-gray-300 dark:bg-zinc-700 text-gray-500 dark:text-zinc-400 cursor-not-allowed'
                       : 'btn-primary transform hover:scale-[1.02]'
                   }`}
@@ -338,7 +411,7 @@ export default function Profile() {
                   Profile Complete ✓
                 </div>
                 <p className="text-center text-sm text-gray-500 dark:text-zinc-400 mt-3">
-                  Your profile is up to date. Make changes above to update it.
+                  Your profile and policies are up to date. Make changes above to update them.
                 </p>
               </div>
             )}
