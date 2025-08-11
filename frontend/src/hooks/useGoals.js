@@ -18,6 +18,9 @@ export const useGoals = (filters = {}) => {
 
       setLoading(true);
       const response = await goalApi.getAll(filters);
+      if (!response?.data?.data) {
+        throw new Error('Empty goals response');
+      }
       setGoals(response.data.data);
       setError(null);
     } catch (err) {
@@ -63,7 +66,6 @@ export const useGoals = (filters = {}) => {
   };
 
   useEffect(() => {
-    // Only fetch goals if we have authentication
     const checkAuthAndFetch = async () => {
       const token = await getAccessToken();
       if (token) {
@@ -72,8 +74,8 @@ export const useGoals = (filters = {}) => {
         setLoading(false);
       }
     };
-    
     checkAuthAndFetch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(filters)]);
 
   return {

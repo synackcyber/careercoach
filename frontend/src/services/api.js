@@ -5,11 +5,18 @@ let API_BASE_URL = process.env.REACT_APP_API_URL || '/api/v1';
 try {
   if (typeof window !== 'undefined') {
     const host = window.location.hostname;
-    if ((host === 'localhost' || host === '127.0.0.1') && (!process.env.REACT_APP_API_URL || process.env.REACT_APP_API_URL.includes('backend'))) {
+    const port = window.location.port;
+    // Force direct backend in local dev to avoid proxy issues
+    if ((host === 'localhost' || host === '127.0.0.1') && port === '3000') {
       API_BASE_URL = 'http://localhost:8080/api/v1';
     }
   }
 } catch (_) {}
+
+// Debug: log base URL in development
+if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+  try { console.debug('[api] baseURL =', API_BASE_URL); } catch (_) {}
+}
 
 const api = axios.create({
   baseURL: API_BASE_URL,
