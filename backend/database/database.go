@@ -25,7 +25,7 @@ func Connect(cfg *config.Config) {
 	
 	fmt.Println("Connected to PostgreSQL database")
 	
-	err = DB.AutoMigrate(
+    err = DB.AutoMigrate(
 		&models.JobRole{}, 
 		&models.Responsibility{}, 
 		&models.Goal{}, 
@@ -41,6 +41,10 @@ func Connect(cfg *config.Config) {
 	}
 	
 	fmt.Println("Database migration completed")
+    // Ensure unique index for user_profiles.user_id (required for upsert logic)
+    if err := DB.Exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_user_profiles_user_id ON user_profiles(user_id)").Error; err != nil {
+        log.Println("Warning: failed to ensure unique index on user_profiles(user_id):", err)
+    }
 	
 	seedDefaultData()
 }
