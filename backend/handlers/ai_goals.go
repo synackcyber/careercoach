@@ -77,7 +77,10 @@ func GetOrCreateMyProfile(c *gin.Context) {
 
     var profile models.UserProfile
     if err := database.DB.Where("user_id = ?", userID).First(&profile).Error; err != nil {
-        profile = models.UserProfile{UserID: userID}
+        profile = models.UserProfile{
+            UserID:          userID,
+            ExperienceLevel: "mid", // Default to avoid constraint violation
+        }
         if err2 := database.DB.Create(&profile).Error; err2 != nil {
             if strings.Contains(strings.ToLower(err2.Error()), "duplicate") || strings.Contains(err2.Error(), "23505") {
                 if err3 := database.DB.Where("user_id = ?", userID).First(&profile).Error; err3 == nil {
@@ -108,6 +111,8 @@ func CreateUserProfile(c *gin.Context) {
             return
         }
         profile.ExperienceLevel = *p.ExperienceLevel
+    } else {
+        profile.ExperienceLevel = "mid" // Default if not provided
     }
     if p.Industry != nil { profile.Industry = *p.Industry }
     if p.CompanySize != nil { profile.CompanySize = *p.CompanySize }
