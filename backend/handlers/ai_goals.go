@@ -9,7 +9,6 @@ import (
     "goaltracker/middleware"
     "github.com/gin-gonic/gin"
     "strings"
-    "gorm.io/gorm/clause"
 )
 
 type AIGoalRequest struct {
@@ -78,25 +77,17 @@ func GetOrCreateMyProfile(c *gin.Context) {
 
     var profile models.UserProfile
     if err := database.DB.Where("user_id = ?", userID).First(&profile).Error; err != nil {
-        // Insert if missing; ignore conflict on user_id
         profile = models.UserProfile{UserID: userID}
-        if err2 := database.DB.Clauses(clause.OnConflict{
-            Columns:   []clause.Column{{Name: "user_id"}},
-            DoNothing: true,
-        }).Create(&profile).Error; err2 != nil {
-            // As a fallback, try to read existing if conflict or any transient error
+        if err2 := database.DB.Create(&profile).Error; err2 != nil {
             if strings.Contains(strings.ToLower(err2.Error()), "duplicate") || strings.Contains(err2.Error(), "23505") {
                 if err3 := database.DB.Where("user_id = ?", userID).First(&profile).Error; err3 == nil {
                     c.JSON(http.StatusOK, gin.H{"data": profile})
                     return
                 }
             }
-            // log and include reason in dev response
             c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user profile", "reason": err2.Error()})
             return
         }
-        // Ensure we return the row (whether created or pre-existing)
-        _ = database.DB.Where("user_id = ?", userID).First(&profile).Error
     }
 
     c.JSON(http.StatusOK, gin.H{"data": profile})
