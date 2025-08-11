@@ -30,8 +30,8 @@ func main() {
 		AllowCredentials: true,
 	}))
 
-	// Light rate limiting across all routes (e.g., 60 req/min ~= 1 rps with burst 30)
-	r.Use(middleware.RateLimitMiddleware(30, 1))
+	// Light rate limiting across all routes (e.g., 120 req/min ~= 2 rps with burst 60)
+	r.Use(middleware.RateLimitMiddleware(60, 2))
 
     api := r.Group("/api/v1")
     {

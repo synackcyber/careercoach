@@ -6,8 +6,15 @@ export const useGoals = (filters = {}) => {
   const [goals, setGoals] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [isFetching, setIsFetching] = useState(false); // Prevent duplicate requests
 
   const fetchGoals = async () => {
+    // Prevent duplicate requests
+    if (isFetching) {
+      try { console.debug('[goals] already fetching, skipping duplicate request'); } catch (_) {}
+      return;
+    }
+
     try {
       // Check if user is authenticated before making the API call
       const token = await getAccessToken();
@@ -16,6 +23,7 @@ export const useGoals = (filters = {}) => {
         return; // Don't fetch if not authenticated
       }
 
+      setIsFetching(true);
       setLoading(true);
       try { console.debug('[goals] fetching with filters =', filters); } catch (_) {}
       const response = await goalApi.getAll(filters);
@@ -30,6 +38,7 @@ export const useGoals = (filters = {}) => {
       console.error('Error fetching goals:', err);
     } finally {
       setLoading(false);
+      setIsFetching(false);
       try { console.debug('[goals] loading = false'); } catch (_) {}
     }
   };
@@ -68,6 +77,22 @@ export const useGoals = (filters = {}) => {
     }
   };
 
+  // Debounce function to prevent rapid successive calls
+  const debounce = (func, wait) => {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  };
+
+  // Debounced fetch to prevent rapid successive calls
+  const debouncedFetch = debounce(fetchGoals, 300);
+
   useEffect(() => {
     const checkAuthAndFetch = async () => {
       const token = await getAccessToken();
@@ -86,7 +111,8 @@ export const useGoals = (filters = {}) => {
   useEffect(() => {
     const sub = onAuthStateChange(async (session) => {
       if (session) {
-        fetchGoals();
+        // Use debounced fetch to prevent rapid successive calls
+        debouncedFetch();
       }
     });
     return () => sub?.unsubscribe?.();

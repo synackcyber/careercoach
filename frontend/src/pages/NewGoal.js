@@ -78,7 +78,7 @@ export default function NewGoal() {
         animate={prefersReduced ? undefined : 'show'}
         variants={containerVariants}
       >
-        <div className="max-w-2xl mx-auto p-6">
+        <div className="w-full max-w-2xl mx-auto p-6 ml-20">
           <div className="mx-auto mb-4 h-1 w-14 rounded-full bg-zinc-300/70 dark:bg-zinc-700" aria-hidden="true" />
           <div className="flex items-center justify-between mb-2">
             <h1 className="text-xl font-semibold">New Goal</h1>

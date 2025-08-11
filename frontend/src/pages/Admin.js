@@ -23,7 +23,7 @@ export default function Admin() {
   }, []);
 
   return (
-    <div className="max-w-5xl mx-auto p-6">
+          <div className="w-full max-w-5xl mx-auto p-6 ml-20">
       <h1 className="text-2xl font-semibold mb-4">Admin</h1>
       {error && <div className="text-red-600 text-sm mb-3">{error}</div>}
 

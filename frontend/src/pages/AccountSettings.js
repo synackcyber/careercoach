@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase, getAccessToken } from '../supabase/authClient';
+import { userProfileApi } from '../services/api';
 
 export default function AccountSettings() {
   const [loading, setLoading] = useState(true);
@@ -34,27 +35,19 @@ export default function AccountSettings() {
           
           // Check database for policy acceptance
           try {
-            const token = await getAccessToken();
-            if (token) {
-              const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8080'}/api/v1/profiles/me`, {
-                headers: {
-                  'Authorization': `Bearer ${token}`
-                }
-              });
-              
-              if (response.ok) {
-                const result = await response.json();
-                const profile = result?.data?.data;
-                if (profile) {
-                  if (profile.terms_accepted_at) {
-                    setAcceptedTerms(true);
-                    localStorage.setItem('acceptedTerms', 'true');
-                  }
-                  if (profile.privacy_accepted_at) {
-                    setAcceptedPrivacy(true);
-                    localStorage.setItem('acceptedPrivacy', 'true');
-                  }
-                }
+            const result = await userProfileApi.getOrCreate();
+            const profile = result?.data?.data;
+            if (profile) {
+              console.log('[account] Loaded profile:', profile);
+              if (profile.terms_accepted_at) {
+                setAcceptedTerms(true);
+                localStorage.setItem('acceptedTerms', 'true');
+                console.log('[account] Terms already accepted at:', profile.terms_accepted_at);
+              }
+              if (profile.privacy_accepted_at) {
+                setAcceptedPrivacy(true);
+                localStorage.setItem('acceptedPrivacy', 'true');
+                console.log('[account] Privacy already accepted at:', profile.privacy_accepted_at);
               }
             }
           } catch (err) {
@@ -138,25 +131,24 @@ export default function AccountSettings() {
     // Update database if user has a profile
     if (accepted) {
       try {
-        const token = await getAccessToken();
-        if (token) {
-          const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8080'}/api/v1/profiles/me`, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-              accept_terms: true
-            })
-          });
-          
-          if (response.ok) {
-            setSuccess('Terms of Service accepted successfully!');
-          }
+        console.log('[account] Updating terms acceptance for user:', user?.id);
+        console.log('[account] Request payload:', { accept_terms: true });
+        
+        // First get the current profile to get the ID
+        const profileResult = await userProfileApi.getOrCreate();
+        const profile = profileResult?.data?.data;
+        
+        if (profile && profile.id) {
+          console.log('[account] Updating profile ID:', profile.id);
+          const result = await userProfileApi.update(profile.id, { accept_terms: true });
+          console.log('✅ Terms accepted successfully!', result);
+          setSuccess('Terms of Service accepted successfully!');
+        } else {
+          throw new Error('No profile found to update');
         }
       } catch (err) {
-        console.error('Failed to update terms acceptance:', err);
+        console.error('❌ Terms acceptance failed:', err);
+        setError('Failed to update terms acceptance. Please try again.');
       }
     }
   };
@@ -168,25 +160,24 @@ export default function AccountSettings() {
     // Update database if user has a profile
     if (accepted) {
       try {
-        const token = await getAccessToken();
-        if (token) {
-          const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8080'}/api/v1/profiles/me`, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-              accept_privacy: true
-            })
-          });
-          
-          if (response.ok) {
-            setSuccess('Privacy Policy accepted successfully!');
-          }
+        console.log('[account] Updating privacy acceptance for user:', user?.id);
+        console.log('[account] Request payload:', { accept_privacy: true });
+        
+        // First get the current profile to get the ID
+        const profileResult = await userProfileApi.getOrCreate();
+        const profile = profileResult?.data?.data;
+        
+        if (profile && profile.id) {
+          console.log('[account] Updating profile ID:', profile.id);
+          const result = await userProfileApi.update(profile.id, { accept_privacy: true });
+          console.log('✅ Privacy policy accepted successfully!', result);
+          setSuccess('Privacy Policy accepted successfully!');
+        } else {
+          throw new Error('No profile found to update');
         }
       } catch (err) {
-        console.error('Failed to update privacy acceptance:', err);
+        console.error('❌ Privacy policy acceptance failed:', err);
+        setError('Failed to update privacy acceptance. Please try again.');
       }
     }
   };
@@ -243,7 +234,7 @@ export default function AccountSettings() {
 
   return (
     <div className="min-h-screen app-bg">
-      <div className="max-w-2xl mx-auto px-6 py-12">
+              <div className="w-full max-w-2xl mx-auto px-6 py-12 ml-20">
         {/* Header */}
         <div className="text-center mb-12">
           <div className="inline-flex items-center justify-center w-20 h-20 bg-white/90 dark:bg-zinc-800 rounded-full mb-6 shadow-card ring-1 ring-black/5">

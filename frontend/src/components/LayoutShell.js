@@ -27,7 +27,7 @@ export default function LayoutShell({ route, session, onLogout, needsOnboarding,
   const contentPaddingLeft = isDesktop && isAuthenticated ? getDesktopNavWidth(desktopExpanded) : 0;
 
   return (
-    <div className="min-h-screen app-bg">
+    <div className="min-h-screen bg-[#f5f5f0] dark:bg-[#1a1a1a]">
       {/* Desktop push nav (width-based) */}
       {isDesktop && isAuthenticated && (
         <DesktopNav
@@ -57,15 +57,15 @@ export default function LayoutShell({ route, session, onLogout, needsOnboarding,
       <motion.main
         className="min-h-screen relative"
         initial={false}
-        animate={{ paddingLeft: contentPaddingLeft }}
+        animate={{ paddingLeft: isDesktop ? '80px' : 0 }}
         transition={{ type: 'spring', stiffness: 320, damping: 40 }}
       >
         <div className={`${(!isDesktop && isAuthenticated) ? 'pt-14 pb-16' : 'pb-0'}`}>
           {isAuthenticated && needsOnboarding && route !== '#/profile' && (
             <div className="px-6 pt-4">
               <div className="max-w-7xl mx-auto">
-                <div className="rounded-xl bg-yellow-50 border border-yellow-200 p-4 flex items-center justify-between">
-                  <div className="text-sm text-yellow-900">Complete your profile to personalize your goals.</div>
+                <div className="rounded-xl bg-amber-50 border border-amber-200 p-4 flex items-center justify-between">
+                  <div className="text-sm text-amber-900">Complete your profile to personalize your goals.</div>
                   <button className="btn-wire" onClick={() => { window.location.hash = '#/profile'; }}>Complete profile</button>
                 </div>
               </div>

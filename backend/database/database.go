@@ -41,6 +41,18 @@ func Connect(cfg *config.Config) {
 	}
 	
 	fmt.Println("Database migration completed")
+    
+    // Manual migration for Legal Agreement fields (ensures they exist)
+    if err := DB.Exec("ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS terms_accepted_at TIMESTAMP NULL").Error; err != nil {
+        log.Println("Warning: failed to add terms_accepted_at column:", err)
+    }
+    if err := DB.Exec("ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS privacy_accepted_at TIMESTAMP NULL").Error; err != nil {
+        log.Println("Warning: failed to add privacy_accepted_at column:", err)
+    }
+    if err := DB.Exec("ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS policies_version VARCHAR DEFAULT '1.0'").Error; err != nil {
+        log.Println("Warning: failed to add policies_version column:", err)
+    }
+    
     // Ensure unique index for user_profiles.user_id (required for upsert logic)
     if err := DB.Exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_user_profiles_user_id ON user_profiles(user_id)").Error; err != nil {
         log.Println("Warning: failed to ensure unique index on user_profiles(user_id):", err)

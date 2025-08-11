@@ -97,12 +97,11 @@ const Dashboard = () => {
     <div className="min-h-screen app-bg">
       {/* Header card */}
       <div className="px-6 pt-6">
-        <div className="max-w-7xl mx-auto">
+        <div className="w-full">
           <div className="rounded-2xl ring-1 ring-black/5 shadow-card bg-white/85 dark:bg-zinc-900/70 backdrop-blur px-6 py-6">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-zinc-100">Goal Tracker</h1>
-                <p className="text-gray-600 dark:text-zinc-300 mt-1">Track your personal and professional goals</p>
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-zinc-100">Activity</h1>
               </div>
               <div className="flex items-center space-x-3" />
             </div>
@@ -131,7 +130,7 @@ const Dashboard = () => {
       </div>
 
       {/* Animated Search */}
-      <div className="max-w-7xl mx-auto px-6 py-6">
+      <div className="w-full px-6 py-6">
         <div className="mb-8 flex justify-center">
           <motion.div
             className="relative"
@@ -155,9 +154,24 @@ const Dashboard = () => {
 
         {/* Goals Grid */}
         {loading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin w-8 h-8 border-2 border-primary-600 border-t-transparent rounded-full mx-auto"></div>
-            <p className="text-gray-500 mt-4">Loading your goals...</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, index) => (
+              <div key={index} className="bg-white/85 dark:bg-zinc-900/70 backdrop-blur rounded-2xl ring-1 ring-black/5 shadow-card p-6 animate-pulse">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="h-6 bg-gray-200 dark:bg-zinc-700 rounded-lg w-3/4"></div>
+                  <div className="h-4 w-4 bg-gray-200 dark:bg-zinc-700 rounded"></div>
+                </div>
+                <div className="space-y-3">
+                  <div className="h-4 bg-gray-200 dark:bg-zinc-700 rounded w-full"></div>
+                  <div className="h-4 bg-gray-200 dark:bg-zinc-700 rounded w-2/3"></div>
+                  <div className="h-4 bg-gray-200 dark:bg-zinc-700 rounded w-1/2"></div>
+                </div>
+                <div className="flex items-center justify-between mt-6">
+                  <div className="h-3 bg-gray-200 dark:bg-zinc-700 rounded w-20"></div>
+                  <div className="h-8 bg-gray-200 dark:bg-zinc-700 rounded-lg w-20"></div>
+                </div>
+              </div>
+            ))}
           </div>
         ) : filteredGoals.length === 0 ? (
           <div className="text-center py-12">
