@@ -15,6 +15,7 @@ export default function Profile() {
     let subscription;
 
     const fetchWithTimeout = async () => {
+      try { console.debug('[profile] fetchWithTimeout start'); } catch (_) {}
       if (!isMounted) return;
       setLoading(true);
       setError('');
@@ -25,6 +26,7 @@ export default function Profile() {
           new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), timeoutMs)),
         ]);
         if (!isMounted) return;
+        try { console.debug('[profile] fetch success'); } catch (_) {}
         const p = result?.data?.data || {};
         setProfile({
           id: p.id,
@@ -34,23 +36,29 @@ export default function Profile() {
         });
       } catch (e) {
         if (!isMounted) return;
+        try { console.error('[profile] fetch error', e); } catch (_) {}
         setError('Failed to load profile. Please try again.');
       } finally {
         if (isMounted) setLoading(false);
+        try { console.debug('[profile] loading = false'); } catch (_) {}
       }
     };
 
     const ensureAuthThenFetch = async () => {
       const token = await getAccessToken();
+      try { console.debug('[profile] token present =', !!token); } catch (_) {}
       if (token) {
         fetchWithTimeout();
       } else {
         subscription = onAuthStateChange((s) => {
           if (s) {
+            try { console.debug('[profile] session arrived, fetching'); } catch (_) {}
             fetchWithTimeout();
             try { subscription?.unsubscribe?.(); } catch (_) {}
           }
         });
+        // Fallback: stop showing spinner if auth doesn't arrive quickly
+        setTimeout(() => { if (isMounted && loading) { setLoading(false); setError('Please sign in to view your profile.'); } }, 8000);
       }
     };
 
