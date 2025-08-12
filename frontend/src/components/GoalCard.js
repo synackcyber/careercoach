@@ -1,51 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { CalendarIcon, BriefcaseIcon, CheckCircleIcon, ClockIcon, PauseCircleIcon, EllipsisVerticalIcon } from '@heroicons/react/24/outline';
+import React from 'react';
+import { CalendarIcon, EllipsisVerticalIcon } from '@heroicons/react/24/outline';
 
 const GoalCard = ({ goal, onEdit, onDelete, onClick, delayMs = 0 }) => {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef(null);
 
-  useEffect(() => {
-    const onDocClick = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
-        setMenuOpen(false);
-      }
-    };
-    if (menuOpen) document.addEventListener('mousedown', onDocClick);
-    return () => document.removeEventListener('mousedown', onDocClick);
-  }, [menuOpen]);
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'completed':
-        return <CheckCircleIcon className="w-5 h-5 text-green-600" />;
-      case 'paused':
-        return <PauseCircleIcon className="w-5 h-5 text-yellow-600" />;
-      default:
-        return <ClockIcon className="w-5 h-5 text-accent-600" />;
-    }
-  };
-
-  const getStatusBadgeClass = (status) => {
-    switch (status) {
-      case 'completed':
-        return 'status-badge status-completed';
-      case 'paused':
-        return 'status-badge status-paused';
-      default:
-        return 'status-badge status-active';
-    }
-  };
-
-  const getPriorityBadgeClass = (priority) => {
-    switch (priority) {
-      case 'high':
-        return 'status-badge priority-high';
-      case 'medium':
-        return 'status-badge priority-medium';
-      default:
-        return 'status-badge priority-low';
-    }
-  };
 
   const formatDate = (dateString) => {
     if (!dateString) return null;
@@ -70,26 +27,40 @@ const GoalCard = ({ goal, onEdit, onDelete, onClick, delayMs = 0 }) => {
   };
 
   return (
-    <div className="card h-full flex flex-col cursor-pointer transition-transform duration-200 hover:-translate-y-0.5 animate-in-up" style={{ animationDelay: `${delayMs}ms` }} onClick={() => onClick(goal)}>
+    <div className="card h-full flex flex-col cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-xl animate-in-up group" style={{ animationDelay: `${delayMs}ms` }} onClick={() => onClick(goal)}>
       <div className="flex-1">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center space-x-3">
-          {getStatusIcon(goal.status)}
           <h3 className="text-lg font-semibold text-gray-900 dark:text-zinc-100 line-clamp-2">{goal.title}</h3>
+        </div>
+        {/* Animated Status Dot */}
+        <div className="flex-shrink-0">
+          <div className={`w-3 h-3 rounded-full transition-all duration-300 ${
+            goal.status === 'completed' ? 'bg-blue-500 shadow-lg shadow-blue-500/30' : 
+            goal.status === 'paused' ? 'bg-yellow-500 shadow-lg shadow-yellow-500/30' : 
+            'bg-green-500 shadow-lg shadow-green-500/30'
+          } ${
+            goal.status === 'active' ? 'animate-pulse' : ''
+          } group-hover:scale-110`} />
         </div>
       </div>
 
       {goal.description && (
-        <p className="text-gray-600 dark:text-zinc-300 mb-4 line-clamp-2">{goal.description}</p>
+        <div className="mb-4">
+          <p className={`text-gray-600 dark:text-zinc-300 transition-all duration-300 ${
+            goal.description.length > 100 ? 'line-clamp-2 group-hover:line-clamp-none' : ''
+          }`}>
+            {goal.description}
+          </p>
+          {goal.description.length > 100 && (
+            <div className="mt-2 text-xs text-accent-600 dark:text-accent-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              Hover to see more
+            </div>
+          )}
+        </div>
       )}
 
       <div className="flex items-center justify-between text-sm text-gray-500 dark:text-zinc-400 mb-4">
-        {goal.job_role && (
-          <div className="flex items-center space-x-1">
-            <BriefcaseIcon className="w-4 h-4" />
-            <span>{goal.job_role.title}</span>
-          </div>
-        )}
         {goal.due_date && (
           <div className="flex items-center space-x-1">
             <CalendarIcon className="w-4 h-4" />
@@ -98,19 +69,33 @@ const GoalCard = ({ goal, onEdit, onDelete, onClick, delayMs = 0 }) => {
         )}
       </div>
 
-      {/* Progress Ring */}
+      {/* Progress Bar */}
       <div className="mb-4">
         <div className="flex items-center justify-between text-sm text-gray-600 dark:text-zinc-300 mb-2">
           <span>Progress</span>
-          <span>{getLatestProgress()}%</span>
-        </div>
-        <div className="flex items-center justify-between">
-          <div className="relative h-8 w-8 rounded-full"
-               style={{ background: `conic-gradient(#b1814e ${getLatestProgress()*3.6}deg, #e6e4df 0)` }}>
-            <div className="absolute inset-1 rounded-full bg-white dark:bg-zinc-900" />
-          </div>
           <div className="text-xs text-gray-500 dark:text-zinc-400">
             {goal.due_date ? daysUntil(goal.due_date) : ''}
+          </div>
+        </div>
+        <div className="relative">
+          {/* Background track */}
+          <div className="h-2 bg-gray-200 dark:bg-zinc-700 rounded-full overflow-hidden">
+            {/* Animated progress fill */}
+            <div 
+              className="h-full rounded-full transition-all duration-1000 ease-out group-hover:shadow-sm"
+              style={{
+                width: `${getLatestProgress()}%`,
+                background: `linear-gradient(90deg, 
+                  ${getLatestProgress() >= 80 ? '#10b981' : 
+                    getLatestProgress() >= 50 ? '#f59e0b' : '#ef4444'} 0%, 
+                  ${getLatestProgress() >= 80 ? '#059669' : 
+                    getLatestProgress() >= 50 ? '#d97706' : '#dc2626'} 100%)`
+              }}
+            />
+          </div>
+          {/* Progress percentage (subtle) */}
+          <div className="absolute -top-6 right-0 text-xs text-gray-500 dark:text-zinc-400">
+            {getLatestProgress()}%
           </div>
         </div>
       </div>
@@ -121,52 +106,24 @@ const GoalCard = ({ goal, onEdit, onDelete, onClick, delayMs = 0 }) => {
       {/* Bottom action bar */}
       <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-zinc-800">
         <div className="flex items-center gap-2">
-          <span className={getStatusBadgeClass(goal.status)}>
-            {goal.status}
-          </span>
-          <span className={getPriorityBadgeClass(goal.priority)}>
-            {goal.priority}
-          </span>
+          {/* Priority indicator - subtle dot */}
+          <div className={`w-2 h-2 rounded-full ${
+            goal.priority === 'high' ? 'bg-red-500' : 
+            goal.priority === 'medium' ? 'bg-yellow-500' : 
+            'bg-gray-400'
+          }`} />
         </div>
-        <div className="relative" ref={menuRef}>
+        <div className="relative">
           <button
-            aria-haspopup="menu"
-            aria-expanded={menuOpen}
-            onClick={(e) => { e.stopPropagation(); setMenuOpen((v) => !v); }}
+            onClick={(e) => { 
+              e.stopPropagation(); 
+              onEdit(goal); 
+            }}
             className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-accent-500"
-            title="More actions"
+            title="Edit goal"
           >
             <EllipsisVerticalIcon className="w-5 h-5 text-gray-500" />
           </button>
-          {menuOpen && (
-            <div
-              role="menu"
-              className="absolute top-1/2 -translate-y-1/2 right-full mr-2 w-36 rounded-lg bg-white dark:bg-zinc-900 shadow-card ring-1 ring-black/5 py-1 z-20"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button
-                role="menuitem"
-                className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-zinc-800"
-                onClick={() => { setMenuOpen(false); onEdit(goal); }}
-              >
-                Edit
-              </button>
-              {onDelete && (
-                <button
-                  role="menuitem"
-                  className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                  onClick={() => {
-                    setMenuOpen(false);
-                    if (window.confirm('Delete this goal? This cannot be undone.')) {
-                      onDelete(goal.id);
-                    }
-                  }}
-                >
-                  Delete
-                </button>
-              )}
-            </div>
-          )}
         </div>
       </div>
     </div>

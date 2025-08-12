@@ -28,6 +28,11 @@ type Config struct {
 
     // Admin allowlist (comma-separated Supabase user IDs)
     AdminUserIDs string
+
+    // AI/LLM settings
+    AISuggestionsProvider string // "openai" | "local"
+    OpenAIAPIKey          string
+    OpenAIModel           string
 }
 
 func Load() *Config {
@@ -51,10 +56,19 @@ func Load() *Config {
         SupabaseAnonKey: getEnvOrDefault("SUPABASE_ANON_KEY", ""),
         SupabaseJWTSecret: getEnvOrDefault("SUPABASE_JWT_SECRET", ""),
         AdminUserIDs: getEnvOrDefault("ADMIN_USER_IDS", ""),
+
+        // AI
+        AISuggestionsProvider: getEnvOrDefault("AI_SUGGESTIONS_PROVIDER", "local"),
+        OpenAIAPIKey:          getEnvOrDefault("OPENAI_API_KEY", ""),
+        OpenAIModel:           getEnvOrDefault("OPENAI_MODEL", "gpt-4o-mini"),
 	}
 	
-	// Safe debug logging
-	fmt.Printf("Config loaded - DBHost: %s, GinMode: %s\n", config.DBHost, config.GinMode)
+	// Safe debug logging - only non-sensitive config values
+	fmt.Printf("Config loaded - DBHost: %s, GinMode: %s, APIPort: %s\n", 
+		config.DBHost, config.GinMode, config.APIPort)
+	fmt.Printf("Auth configured: OIDC=%t, Supabase=%t\n", 
+		config.OIDCIssuerURL != "", config.SupabaseJWTSecret != "")
+	fmt.Printf("AI provider: %s\n", config.AISuggestionsProvider)
 	
 	return config
 }

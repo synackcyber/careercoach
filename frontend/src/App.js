@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import Dashboard from './pages/Dashboard';
-import TimelineVertical from './pages/TimelineVertical';
+import MarketData from './pages/MarketData';
 import Profile from './pages/Profile';
+import AccountSettings from './pages/AccountSettings';
 import NewGoal from './pages/NewGoal';
 import Admin from './pages/Admin';
 import Login from './auth/Login';
@@ -9,6 +10,7 @@ import Callback from './auth/Callback';
 import { onAuthStateChange, signOut } from './supabase/authClient';
 import { supabase } from './supabase/authClient';
 import LayoutShell from './components/LayoutShell';
+import { userProfileApi } from './services/api';
 import './index.css';
 
 function parseTokensFromHash() {
@@ -25,6 +27,8 @@ function parseTokensFromHash() {
 function App() {
   const [route, setRoute] = useState(window.location.hash || '#/');
   const [session, setSession] = useState(null);
+  const [mustOnboard, setMustOnboard] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
     const maybeSetSession = async () => {
@@ -44,8 +48,51 @@ function App() {
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
 
+  // Fetch current session on mount so we don't flash the Login screen
   useEffect(() => {
-    const subscription = onAuthStateChange((s) => setSession(s));
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (cancelled) return;
+        const sess = data?.session || null;
+        setSession(sess);
+        if (sess) {
+          try {
+            const { data: resp } = await userProfileApi.getOrCreate();
+            const p = resp?.data || {};
+            // Tech-only: do not require industry for onboarding
+            const missing = !p.current_role || !p.experience_level;
+            setMustOnboard(missing);
+          } catch (_) {
+            setMustOnboard(false);
+          }
+        }
+      } finally {
+        if (!cancelled) setAuthLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    const subscription = onAuthStateChange(async (s) => {
+      setSession(s);
+      setAuthLoading(false);
+      if (s) {
+        try {
+          const { data } = await userProfileApi.getOrCreate();
+          const p = data?.data || {};
+          // Tech-only: do not require industry for onboarding
+          const missing = !p.current_role || !p.experience_level;
+          setMustOnboard(missing);
+        } catch (_) {
+          setMustOnboard(false);
+        }
+      } else {
+        setMustOnboard(false);
+      }
+    });
     return () => subscription?.unsubscribe?.();
   }, []);
 
@@ -55,23 +102,34 @@ function App() {
   };
 
   const renderContent = () => {
-    if (route === '#/auth/callback') {
+    if ((route || '').startsWith('#/auth/callback')) {
       return <Callback />;
+    }
+
+    if (authLoading) {
+      return <div />; // return an element so LayoutShell can clone safely
     }
 
     if (!session) {
       return <Login />;
     }
 
+    // Allow Market Data to render with inline profile prompt even when onboarding is required
+    if (mustOnboard && route !== '#/profile' && route !== '#/market') {
+      return <Profile />;
+    }
+
     switch (route) {
       case '#/':
         return <Dashboard key={session ? 'authenticated' : 'unauthenticated'} />;
-      case '#/timeline':
-        return <TimelineVertical />;
       case '#/profile':
         return <Profile />;
+      case '#/account':
+        return <AccountSettings />;
       case '#/new-goal':
         return <NewGoal />;
+      case '#/market':
+        return <MarketData />;
       case '#/admin':
         return <Admin />;
       default:
@@ -80,7 +138,7 @@ function App() {
   };
 
   return (
-    <LayoutShell route={route} session={session} onLogout={handleLogout}>
+    <LayoutShell route={route} session={session} onLogout={handleLogout} needsOnboarding={mustOnboard}>
       {renderContent()}
     </LayoutShell>
   );

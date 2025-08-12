@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useGoals } from '../hooks/useGoals';
 import ProgressModal from '../components/ProgressModal';
+import PageTitle from '../components/PageTitle';
 
 const dayMs = 24 * 60 * 60 * 1000;
 
@@ -116,7 +117,7 @@ export default function Timeline() {
         <div className="relative w-full px-4 sm:px-6 lg:px-8 py-6">
           <div className="sticky top-0 z-10 backdrop-blur-sm bg-white/60 dark:bg-zinc-900/40 px-4 py-3 rounded-none shadow-none ring-0 animate-in-down flex items-center justify-between">
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-zinc-100">Timeline</h1>
+              <PageTitle className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-zinc-100">Timeline</PageTitle>
               <p className="text-gray-600 dark:text-zinc-400 mt-1">Interactive view of goals over time</p>
             </div>
             <div className="flex items-center gap-2">
@@ -200,7 +201,7 @@ export default function Timeline() {
                           title={g.title}
                           onClick={() => openGoal(g)}
                         >
-                          {g.priority ? `${g.priority} • ` : ''}{g.status}
+                          {g.status}
                         </button>
                       </div>
                     );

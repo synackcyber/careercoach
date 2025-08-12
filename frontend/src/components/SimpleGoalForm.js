@@ -4,6 +4,7 @@ import { useJobRoles } from '../hooks/useJobRoles';
 import { useResponsibilities } from '../hooks/useResponsibilities';
 import { useGoalSuggestions } from '../hooks/useGoalSuggestions';
 import AIGoalSuggestions from './AIGoalSuggestions';
+import api, { aiApi } from '../services/api';
 
 const SimpleGoalForm = ({ goal, onSubmit, onClose, isOpen }) => {
   const { jobRoles } = useJobRoles();
@@ -119,8 +120,35 @@ const SimpleGoalForm = ({ goal, onSubmit, onClose, isOpen }) => {
         status: goal?.status || 'active',
         due_date: formData.due_date || null
       };
-      
-      await onSubmit(submitData);
+      // If AI suggestion was chosen, refine SMART and pre-seed milestones metadata
+      let metadata = null;
+      if (selectedSuggestion && goalType === 'ai-powered') {
+        try {
+          // SMART refinement
+          const smartResp = await api.post('/ai/refine-smart', {
+            title: submitData.title,
+            description: submitData.description,
+            due_date: submitData.due_date || '',
+            draft: { specific: '', achievable: '', relevant: '', time_bound: { due_date: submitData.due_date || '', review_cadence: 'weekly' } },
+          });
+          const smart = smartResp?.data?.data || {};
+          // Milestones generation (5 phases by default)
+          const msResp = await api.post('/ai/milestones', {
+            title: submitData.title,
+            description: submitData.description,
+            due_date: (submitData.due_date || '').slice(0, 10),
+            count: 5,
+          });
+          const milestones = msResp?.data?.data || [];
+          metadata = { smart, milestones };
+        } catch (err) {
+          // Non-blocking; proceed without metadata if AI fails
+          metadata = null;
+        }
+      }
+
+      const finalData = metadata ? { ...submitData, metadata } : submitData;
+      await onSubmit(finalData);
       onClose();
     } catch (error) {
       console.error('Error submitting goal:', error);

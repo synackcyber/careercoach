@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { supabase, signInWithMagicLink, signInWithPassword } from '../supabase/authClient';
+import { signInWithMagicLink } from '../supabase/authClient';
 
 export default function Login() {
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -14,14 +13,6 @@ export default function Login() {
     const { error } = await signInWithMagicLink(email);
     if (error) setError(error.message || 'Failed to send magic link');
     else setMessage('Check your email for the magic link.');
-    setLoading(false);
-  };
-
-  const handlePassword = async (e) => {
-    e.preventDefault();
-    setLoading(true); setError('');
-    const { error } = await signInWithPassword(email, password);
-    if (error) setError(error.message || 'Login failed');
     setLoading(false);
   };
 
@@ -39,25 +30,8 @@ export default function Login() {
             className="input-field w-full"
             required
           />
-          <button disabled={loading} className="btn-wire-accent w-full" type="submit">
-            {loading ? 'Sending…' : 'Send magic link'}
-          </button>
-        </form>
-
-        <div className="my-4 text-center text-xs text-gray-500">or</div>
-
-        <form className="space-y-3" onSubmit={handlePassword}>
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="input-field w-full"
-            minLength={6}
-            required
-          />
           <button disabled={loading} className="btn-primary w-full" type="submit">
-            {loading ? 'Signing in…' : 'Sign in'}
+            {loading ? 'Sending…' : 'Send magic link'}
           </button>
         </form>
 

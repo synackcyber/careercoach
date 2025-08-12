@@ -25,7 +25,7 @@ func Connect(cfg *config.Config) {
 	
 	fmt.Println("Connected to PostgreSQL database")
 	
-	err = DB.AutoMigrate(
+    err = DB.AutoMigrate(
 		&models.JobRole{}, 
 		&models.Responsibility{}, 
 		&models.Goal{}, 
@@ -35,12 +35,39 @@ func Connect(cfg *config.Config) {
 		&models.UserProfile{},
 		&models.AIGoalSuggestion{},
 		&models.LearningInsight{},
+        &models.KRSnapshot{},
 	)
 	if err != nil {
 		log.Fatal("Failed to migrate database:", err)
 	}
 	
 	fmt.Println("Database migration completed")
+    
+    // Manual migration for Legal Agreement fields (ensures they exist)
+    if err := DB.Exec("ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS terms_accepted_at TIMESTAMP NULL").Error; err != nil {
+        log.Println("Warning: failed to add terms_accepted_at column:", err)
+    }
+    if err := DB.Exec("ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS privacy_accepted_at TIMESTAMP NULL").Error; err != nil {
+        log.Println("Warning: failed to add privacy_accepted_at column:", err)
+    }
+    if err := DB.Exec("ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS policies_version VARCHAR DEFAULT '1.0'").Error; err != nil {
+        log.Println("Warning: failed to add policies_version column:", err)
+    }
+    
+    // Ensure unique index for user_profiles.user_id (required for upsert logic)
+    if err := DB.Exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_user_profiles_user_id ON user_profiles(user_id)").Error; err != nil {
+        log.Println("Warning: failed to ensure unique index on user_profiles(user_id):", err)
+    }
+
+    // Ensure IT profile JSONB column exists for structured IT data
+    if err := DB.Exec("ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS it_profile JSONB").Error; err != nil {
+        log.Println("Warning: failed to add it_profile column:", err)
+    }
+
+    // Ensure goals.metadata JSONB exists for OKR/SMART data
+    if err := DB.Exec("ALTER TABLE goals ADD COLUMN IF NOT EXISTS metadata JSONB").Error; err != nil {
+        log.Println("Warning: failed to add metadata column on goals:", err)
+    }
 	
 	seedDefaultData()
 }

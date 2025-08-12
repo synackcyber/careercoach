@@ -17,8 +17,10 @@ func main() {
 	
 	database.Connect(cfg)
 	
-	r := gin.New()
-	r.Use(gin.Recovery())
+    r := gin.New()
+    // Log requests for debugging; keep in production for now (can be toggled with mode if needed)
+    r.Use(gin.Logger())
+    r.Use(gin.Recovery())
 
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{cfg.FrontendURL},
@@ -28,11 +30,17 @@ func main() {
 		AllowCredentials: true,
 	}))
 
-	// Light rate limiting across all routes (e.g., 60 req/min ~= 1 rps with burst 30)
-	r.Use(middleware.RateLimitMiddleware(30, 1))
+	// Light rate limiting across all routes (e.g., 120 req/min ~= 2 rps with burst 60)
+	r.Use(middleware.RateLimitMiddleware(60, 2))
+	
+	// Request size limiting for security
+	r.Use(middleware.RequestSizeLimiter(middleware.MaxRequestSize))
 
     api := r.Group("/api/v1")
     {
+        // Security endpoints
+        api.GET("/csrf-token", middleware.CSRFTokenEndpoint())
+        
         // Public groups
         jobRoles := api.Group("/job-roles")
         {
@@ -51,6 +59,8 @@ func main() {
         {
             suggestions.GET("", handlers.GetGoalSuggestions)
             suggestions.GET("/:id", handlers.GetGoalSuggestion)
+            // Profile-based
+            suggestions.GET("/for-profile", handlers.GetProfileBasedSuggestions)
         }
 
         progressSuggestions := api.Group("/progress-suggestions")
@@ -60,9 +70,10 @@ func main() {
             progressSuggestions.GET("/:id", handlers.GetProgressSuggestion)
         }
 
-        // Protected groups
+        // Protected groups with authentication and CSRF protection
         authRequired := api.Group("")
         authRequired.Use(middleware.RequireAuth())
+        authRequired.Use(middleware.CSRFProtection())
 
         goals := authRequired.Group("/goals")
         {
@@ -86,6 +97,12 @@ func main() {
         aiGoals := authRequired.Group("/ai")
         {
             aiGoals.POST("/goal-suggestions", handlers.GetAIGoalSuggestions)
+            // SMART-only endpoint (preferred)
+            aiGoals.POST("/refine-smart", handlers.RefineSMARTRoute)
+            // Legacy OKR+SMART (kept for compatibility if called)
+            aiGoals.POST("/refine-okr", handlers.RefineOKRSmart)
+            // Milestones
+            aiGoals.POST("/milestones", handlers.GenerateMilestonesRoute)
         }
 
         userProfiles := authRequired.Group("/profiles")
@@ -102,6 +119,7 @@ func main() {
         {
             admin.GET("/health", handlers.AdminHealth)
             admin.GET("/users", handlers.AdminUsers)
+            admin.GET("/ai-status", handlers.AdminAIStatus)
         }
     }
 	

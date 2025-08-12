@@ -36,10 +36,24 @@ type Goal struct {
 	Priority    string    `json:"priority" gorm:"default:'medium';check:priority IN ('low','medium','high')"`
 	DueDate     *time.Time `json:"due_date"`
     Tags        string    `json:"tags"` // JSON array of strings
+    Metadata    string    `json:"metadata" gorm:"type:jsonb"` // Structured OKR/SMART, initiatives, milestones
 	Progress    []Progress `json:"progress,omitempty" gorm:"foreignKey:GoalID"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 	DeletedAt   gorm.DeletedAt `json:"-" gorm:"index"`
+}
+
+// KRSnapshot stores time-series points for a goal's key results for analytics
+type KRSnapshot struct {
+    ID          uint      `json:"id" gorm:"primaryKey"`
+    UserID      string    `json:"-" gorm:"type:uuid;not null;index"`
+    GoalID      uint      `json:"goal_id" gorm:"not null;index"`
+    KRID        string    `json:"kr_id" gorm:"not null;index"`
+    Value       float64   `json:"value"`
+    Status      string    `json:"status" gorm:"check:status IN ('on_track','at_risk','off_track')"`
+    Confidence  float64   `json:"confidence"`
+    CapturedAt  time.Time `json:"captured_at" gorm:"index"`
+    CreatedAt   time.Time `json:"created_at"`
 }
 
 type Progress struct {
@@ -83,6 +97,10 @@ type UserProfile struct {
 	CareerGoals       string `json:"career_goals"`
 	CurrentTools      string `json:"current_tools"` // JSON array of current tool IDs
 	SkillGaps         string `json:"skill_gaps"`    // JSON array of identified gaps
+    ITProfile         string `json:"it_profile" gorm:"type:jsonb"` // Structured IT profile JSON (subdomains, frameworks, certs, platforms, KPIs, etc.)
+	TermsAcceptedAt   *time.Time `json:"terms_accepted_at"`
+	PrivacyAcceptedAt *time.Time `json:"privacy_accepted_at"`
+	PoliciesVersion   string     `json:"policies_version" gorm:"default:'1.0'"`
 	CreatedAt         time.Time `json:"created_at"`
 	UpdatedAt         time.Time `json:"updated_at"`
 }

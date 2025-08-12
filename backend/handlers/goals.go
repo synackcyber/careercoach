@@ -4,6 +4,7 @@ import (
     "net/http"
     "time"
     "encoding/json"
+    "strings"
     "goaltracker/database"
     "goaltracker/models"
     "goaltracker/middleware"
@@ -48,13 +49,30 @@ func GetGoal(c *gin.Context) {
 func CreateGoal(c *gin.Context) {
     var payload map[string]interface{}
     if err := c.ShouldBindJSON(&payload); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request format"})
 		return
 	}
-    // Map known fields with light validation and transforms
+    
+    // Map known fields with validation
     var goal models.Goal
-    if v, ok := payload["title"].(string); ok { goal.Title = v }
-    if v, ok := payload["description"].(string); ok { goal.Description = v }
+    if v, ok := payload["title"].(string); ok { 
+        if err := middleware.ValidateStringLength("title", v, 1, middleware.MaxTitleLength); err != nil {
+            c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+            return
+        }
+        goal.Title = v 
+    } else {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "title is required"})
+        return
+    }
+    
+    if v, ok := payload["description"].(string); ok { 
+        if err := middleware.ValidateStringLength("description", v, 0, middleware.MaxDescriptionLength); err != nil {
+            c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+            return
+        }
+        goal.Description = v 
+    }
     if v, ok := payload["priority"].(string); ok { goal.Priority = v }
     if v, ok := payload["status"].(string); ok { goal.Status = v }
     // due_date can be ISO string
@@ -69,6 +87,12 @@ func CreateGoal(c *gin.Context) {
             goal.Tags = string(b)
         }
     }
+    // metadata: optional object -> store as JSONB string
+    var metaRaw interface{}
+    if mr, ok := payload["metadata"]; ok && mr != nil { metaRaw = mr }
+    if metaRaw != nil {
+        if b, err := json.Marshal(metaRaw); err == nil { goal.Metadata = string(b) }
+    }
     // optional job_role_id
     if v, ok := payload["job_role_id"].(float64); ok { // JSON numbers are float64
         id := uint(v)
@@ -82,6 +106,34 @@ func CreateGoal(c *gin.Context) {
 		return
 	}
 	
+    // If metadata contains milestones, seed initial progress entries as planned milestones (non-blocking)
+    if metaRaw != nil {
+        type milestone struct { Label string `json:"label"`; DueDate string `json:"due_date"` }
+        var milestones []milestone
+        if b, err := json.Marshal(metaRaw); err == nil {
+            var meta map[string]interface{}
+            if err := json.Unmarshal(b, &meta); err == nil {
+                if ms, ok := meta["milestones"]; ok && ms != nil {
+                    if mb, err := json.Marshal(ms); err == nil {
+                        _ = json.Unmarshal(mb, &milestones)
+                    }
+                }
+            }
+        }
+        for _, m := range milestones {
+            p := models.Progress{
+                UserID:     userID,
+                GoalID:     goal.ID,
+                Description: m.Label,
+                Percentage:  0,
+                Notes:       "Planned milestone",
+                NextSteps:   strings.TrimSpace(m.Label + func() string { if m.DueDate != "" { return " (due: " + m.DueDate + ")" }; return "" }()),
+            }
+            // Ignore any error to avoid failing the goal creation
+            _ = database.DB.Create(&p).Error
+        }
+    }
+
 	database.DB.Preload("JobRole").Preload("Progress").First(&goal, goal.ID)
 	
 	c.JSON(http.StatusCreated, gin.H{"data": goal})
@@ -111,6 +163,9 @@ func UpdateGoal(c *gin.Context) {
     }
     if tagsRaw, ok := payload["tags"]; ok {
         if tagsRaw == nil { goal.Tags = "" } else if b, err := json.Marshal(tagsRaw); err == nil { goal.Tags = string(b) }
+    }
+    if metaRaw, ok := payload["metadata"]; ok {
+        if metaRaw == nil { goal.Metadata = "" } else if b, err := json.Marshal(metaRaw); err == nil { goal.Metadata = string(b) }
     }
     if v, ok := payload["job_role_id"].(float64); ok { id := uint(v); goal.JobRoleID = &id }
 	
