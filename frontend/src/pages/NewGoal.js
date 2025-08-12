@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import PageTitle from '../components/PageTitle';
-import { goalApi, jobRoleApi } from '../services/api';
+import { goalApi, jobRoleApi, responsibilityApi } from '../services/api';
+import AIGoalSuggestions from '../components/AIGoalSuggestions';
 
 const priorities = ['low','medium','high'];
 
@@ -14,6 +15,8 @@ export default function NewGoal() {
   const [tags, setTags] = useState([]);
   const [jobRoles, setJobRoles] = useState([]);
   const [jobRoleId, setJobRoleId] = useState('');
+  const [responsibilities, setResponsibilities] = useState([]);
+  const [responsibilityId, setResponsibilityId] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -25,6 +28,24 @@ export default function NewGoal() {
     }).catch(() => {});
     return () => { mounted = false; };
   }, []);
+
+  // Load responsibilities when a job role is selected
+  React.useEffect(() => {
+    let mounted = true;
+    if (!jobRoleId) {
+      setResponsibilities([]);
+      setResponsibilityId('');
+      return;
+    }
+    responsibilityApi.getByJobRole(Number(jobRoleId))
+      .then(({ data }) => {
+        if (!mounted) return;
+        setResponsibilities(data?.data || []);
+        setResponsibilityId('');
+      })
+      .catch(() => {});
+    return () => { mounted = false; };
+  }, [jobRoleId]);
 
   const addTag = () => {
     const t = tagsInput.trim();
@@ -71,6 +92,23 @@ export default function NewGoal() {
 
   const prefersReduced = typeof window !== 'undefined' && (document.documentElement.classList.contains('reduce-motion') || (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches));
 
+  // When a suggestion is selected, prefill the form fields
+  const handleGoalSelect = (suggestion) => {
+    setTitle(suggestion.title || '');
+    setDescription(suggestion.description || suggestion.personalized_description || '');
+    if (suggestion.priority) setPriority(suggestion.priority);
+    if (suggestion.estimated_days) {
+      const d = new Date();
+      d.setDate(d.getDate() + Number(suggestion.estimated_days));
+      setDueDate(d.toISOString().slice(0,10));
+    }
+    // Merge tags if provided
+    if (Array.isArray(suggestion.tags) && suggestion.tags.length) {
+      const merged = Array.from(new Set([...(tags || []), ...suggestion.tags]));
+      setTags(merged);
+    }
+  };
+
   return (
     <div className="min-h-screen app-bg flex items-end">
       <motion.div
@@ -86,6 +124,35 @@ export default function NewGoal() {
             <button type="button" onClick={() => { window.location.hash = '#/'; }} className="btn-secondary btn-wire-sm">Cancel</button>
           </div>
           {error && <div className="text-red-600 mb-3 text-sm">{error}</div>}
+
+          {/* AI Generate Panel */}
+          <div className="mb-6 rounded-2xl ring-1 ring-black/5 bg-white/90 dark:bg-zinc-900/80 p-4">
+            <div className="mb-3">
+              <div className="text-sm font-medium text-gray-700 dark:text-zinc-200 mb-1">Job role (optional)</div>
+              <select className="input-field w-full" value={jobRoleId} onChange={(e) => setJobRoleId(e.target.value)}>
+                <option value="">None</option>
+                {jobRoles.map(r => <option key={r.id} value={r.id}>{r.title}</option>)}
+              </select>
+            </div>
+            {jobRoleId && (
+              <div className="mb-3">
+                <div className="text-sm font-medium text-gray-700 dark:text-zinc-200 mb-1">Responsibility</div>
+                <select className="input-field w-full" value={responsibilityId} onChange={(e) => setResponsibilityId(e.target.value)}>
+                  <option value="">Select responsibility</option>
+                  {responsibilities.map((r) => (
+                    <option key={r.id} value={r.id}>{r.title}</option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500 mt-1">Select a responsibility to generate tailored suggestions.</p>
+              </div>
+            )}
+
+            {responsibilityId && (
+              <div className="mt-4">
+                <AIGoalSuggestions responsibilityId={responsibilityId} onGoalSelect={handleGoalSelect} />
+              </div>
+            )}
+          </div>
 
           <motion.form onSubmit={onSave} className="space-y-5" initial={false}>
             <motion.div variants={item} initial={prefersReduced ? undefined : 'init'} animate={prefersReduced ? undefined : 'show'}>
