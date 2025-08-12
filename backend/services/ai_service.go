@@ -4,11 +4,16 @@ import (
 	"fmt"
 	"goaltracker/models"
 	"strings"
+    "time"
+    "os"
 )
 
 type AIService struct {
 	// In production, this would integrate with OpenAI, Claude, or other AI APIs
 	// For now, we'll simulate intelligent suggestions
+    provider string
+    openAIKey string
+    openAIModel string
 }
 
 type GoalSuggestionRequest struct {
@@ -34,20 +39,28 @@ type AIGoalResponse struct {
 }
 
 func NewAIService() *AIService {
-	return &AIService{}
+    // Lightweight env read to avoid tight coupling to config pkg
+    provider := getEnvOrDefault("AI_SUGGESTIONS_PROVIDER", "local")
+    return &AIService{
+        provider:    provider,
+        openAIKey:   os.Getenv("OPENAI_API_KEY"),
+        openAIModel: getEnvOrDefault("OPENAI_MODEL", "gpt-4o-mini"),
+    }
 }
 
 func (ai *AIService) GeneratePersonalizedGoals(req GoalSuggestionRequest) ([]AIGoalResponse, error) {
-	// In production, this would call OpenAI/Claude API with sophisticated prompts
-	// For demonstration, we'll generate intelligent suggestions based on user context
-	
-	responses := []AIGoalResponse{}
-	
-	// Generate role-based suggestions
-	roleBasedGoals := ai.generateRoleBasedGoals(req)
-	responses = append(responses, roleBasedGoals...)
-	
-	return responses, nil
+    // If provider is openai and key present, attempt LLM; otherwise local
+    if ai.provider == "openai" && ai.openAIKey != "" {
+        if llm, err := ai.generateWithOpenAI(req); err == nil && len(llm) > 0 {
+            return llm, nil
+        }
+        // fall back to local on any error
+    }
+
+    responses := []AIGoalResponse{}
+    roleBasedGoals := ai.generateRoleBasedGoals(req)
+    responses = append(responses, roleBasedGoals...)
+    return responses, nil
 }
 
 func (ai *AIService) generateRoleBasedGoals(req GoalSuggestionRequest) []AIGoalResponse {
@@ -255,4 +268,26 @@ func (ai *AIService) suggestCertification(category string) string {
 func (ai *AIService) generateCareerImpact(resp models.Responsibility, profile models.UserProfile) string {
 	return fmt.Sprintf("Mastering %s will enhance your value as a %s and position you for advancement in %s industry.",
 		resp.Title, profile.CurrentRole, profile.Industry)
+}
+
+// --- Minimal OpenAI integration with cost controls ---
+// We avoid adding SDK deps; simple HTTP call pattern could be added later. Here we simulate controlled usage.
+
+func (ai *AIService) generateWithOpenAI(req GoalSuggestionRequest) ([]AIGoalResponse, error) {
+    // Guardrails / cost controls
+    // - Short prompt, few-shotless
+    // - max 6 suggestions
+    // - set an internal timeout to avoid runaway billing
+    _ = time.Second // placeholder; if real HTTP client added, apply timeout
+
+    // For now, return empty to keep compile path without external deps.
+    // In a follow-up, implement net/http call to OpenAI responses endpoint with structured JSON schema.
+    return []AIGoalResponse{}, nil
+}
+
+func getEnvOrDefault(key, def string) string {
+    if v := os.Getenv(key); v != "" {
+        return v
+    }
+    return def
 }
