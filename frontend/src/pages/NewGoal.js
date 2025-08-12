@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
+import PageTitle from '../components/PageTitle';
 import { goalApi, jobRoleApi } from '../services/api';
 
 const priorities = ['low','medium','high'];
@@ -81,7 +82,7 @@ export default function NewGoal() {
         <div className="w-full max-w-2xl mx-auto p-6 ml-20">
           <div className="mx-auto mb-4 h-1 w-14 rounded-full bg-zinc-300/70 dark:bg-zinc-700" aria-hidden="true" />
           <div className="flex items-center justify-between mb-2">
-            <h1 className="text-xl font-semibold">New Goal</h1>
+            <PageTitle className="text-xl font-semibold">New Goal</PageTitle>
             <button type="button" onClick={() => { window.location.hash = '#/'; }} className="btn-secondary btn-wire-sm">Cancel</button>
           </div>
           {error && <div className="text-red-600 mb-3 text-sm">{error}</div>}

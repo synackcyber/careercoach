@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { supabase, getAccessToken } from '../supabase/authClient';
 import { userProfileApi } from '../services/api';
+import PageTitle from '../components/PageTitle';
+import SectionTitle from '../components/SectionTitle';
 
 export default function AccountSettings() {
   const [loading, setLoading] = useState(true);
@@ -17,6 +19,22 @@ export default function AccountSettings() {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
+  const [profile, setProfile] = useState(null);
+  const [industry, setIndustry] = useState('');
+
+  // Top 10 most relevant industries
+  const topIndustries = [
+    'Technology',
+    'Healthcare', 
+    'Finance',
+    'Education',
+    'Manufacturing',
+    'Consulting',
+    'Media & Entertainment',
+    'Government',
+    'Retail',
+    'Energy'
+  ];
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -39,6 +57,8 @@ export default function AccountSettings() {
             const profile = result?.data?.data;
             if (profile) {
               console.log('[account] Loaded profile:', profile);
+              setProfile(profile);
+              setIndustry(profile.industry || '');
               if (profile.terms_accepted_at) {
                 setAcceptedTerms(true);
                 localStorage.setItem('acceptedTerms', 'true');
@@ -112,13 +132,34 @@ export default function AccountSettings() {
       if (error) {
         setError(error.message);
       } else {
-        setSuccess('Display name updated successfully!');
         setDisplayName(newDisplayName);
+        setSuccess('Display name updated successfully!');
         setShowDisplayNameForm(false);
         setNewDisplayName('');
       }
     } catch (err) {
       setError('Failed to update display name. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleIndustryChange = async (newIndustry) => {
+    if (!profile || newIndustry === industry) return;
+
+    setSaving(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      await userProfileApi.update(profile.id, {
+        industry: newIndustry
+      });
+      
+      setIndustry(newIndustry);
+      setSuccess('Industry updated successfully!');
+    } catch (err) {
+      setError('Failed to update industry. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -242,7 +283,7 @@ export default function AccountSettings() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-zinc-100 mb-3">Account Settings</h1>
+          <PageTitle className="text-4xl font-bold text-gray-900 dark:text-zinc-100 mb-3">Account Settings</PageTitle>
           <p className="text-xl text-gray-600 dark:text-zinc-300 max-w-md mx-auto">
             Manage your account, email, and security settings
           </p>
@@ -269,7 +310,7 @@ export default function AccountSettings() {
 
         {/* Account Information */}
         <div className="rounded-2xl shadow-card ring-1 ring-black/5 bg-white/85 dark:bg-zinc-900/70 backdrop-blur p-8 mb-8">
-          <h2 className="text-2xl font-semibold text-gray-900 dark:text-zinc-100 mb-6">Account Information</h2>
+          <SectionTitle className="text-2xl font-semibold text-gray-900 dark:text-zinc-100 mb-6">Account Information</SectionTitle>
           
           <div className="space-y-6">
             {/* Display Name */}
@@ -316,6 +357,34 @@ export default function AccountSettings() {
               </form>
             )}
 
+            {/* Industry Selection */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-2">Industry</label>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-900 dark:text-zinc-100">
+                  {industry || 'Not set'}
+                </span>
+                <div className="flex items-center space-x-2">
+                  {saving && (
+                    <div className="animate-spin w-4 h-4 border-2 border-accent-500 border-t-transparent rounded-full"></div>
+                  )}
+                  <select
+                    value={industry}
+                    onChange={(e) => handleIndustryChange(e.target.value)}
+                    disabled={saving}
+                    className="px-4 py-2 border border-gray-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100 focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-all duration-200 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <option value="">Select an industry</option>
+                    {topIndustries.map((ind) => (
+                      <option key={ind} value={ind}>
+                        {ind}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+
             {/* Email Address */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-2">Email Address</label>
@@ -359,7 +428,7 @@ export default function AccountSettings() {
 
         {/* Legal Agreements */}
         <div className="rounded-2xl shadow-card ring-1 ring-black/5 bg-white/85 dark:bg-zinc-900/70 backdrop-blur p-8 mb-8">
-          <h2 className="text-2xl font-semibold text-gray-900 dark:text-zinc-100 mb-6">Legal Agreements</h2>
+          <SectionTitle className="text-2xl font-semibold text-gray-900 dark:text-zinc-100 mb-6">Legal Agreements</SectionTitle>
           
           <div className="space-y-6">
             <div className="space-y-4">
@@ -423,7 +492,7 @@ export default function AccountSettings() {
 
         {/* Authentication Info */}
         <div className="rounded-2xl shadow-card ring-1 ring-black/5 bg-white/85 dark:bg-zinc-900/70 backdrop-blur p-8 mb-8">
-          <h2 className="text-2xl font-semibold text-gray-900 dark:text-zinc-100 mb-6">Authentication</h2>
+          <SectionTitle className="text-2xl font-semibold text-gray-900 dark:text-zinc-100 mb-6">Authentication</SectionTitle>
           
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -448,7 +517,7 @@ export default function AccountSettings() {
 
         {/* Preferences */}
         <div className="rounded-2xl shadow-card ring-1 ring-black/5 bg-white/85 dark:bg-zinc-900/70 backdrop-blur p-8 mb-8">
-          <h2 className="text-2xl font-semibold text-gray-900 dark:text-zinc-100 mb-6">Preferences</h2>
+          <SectionTitle className="text-2xl font-semibold text-gray-900 dark:text-zinc-100 mb-6">Preferences</SectionTitle>
           
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -481,7 +550,7 @@ export default function AccountSettings() {
 
         {/* Account Actions */}
         <div className="rounded-2xl shadow-card ring-1 ring-black/5 bg-white/85 dark:bg-zinc-900/70 backdrop-blur p-8 mb-8">
-          <h2 className="text-2xl font-semibold text-gray-900 dark:text-zinc-100 mb-6">Account Actions</h2>
+          <SectionTitle className="text-2xl font-semibold text-gray-900 dark:text-zinc-100 mb-6">Account Actions</SectionTitle>
           
           <div className="space-y-4">
             <div className="flex items-center justify-between">

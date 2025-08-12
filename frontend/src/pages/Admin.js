@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import api from '../services/api';
+import PageTitle from '../components/PageTitle';
+import SectionTitle from '../components/SectionTitle';
 
 export default function Admin() {
   const [health, setHealth] = useState(null);
@@ -24,7 +26,7 @@ export default function Admin() {
 
   return (
           <div className="w-full max-w-5xl mx-auto p-6 ml-20">
-      <h1 className="text-2xl font-semibold mb-4">Admin</h1>
+      <PageTitle className="text-2xl font-semibold mb-4">Admin</PageTitle>
       {error && <div className="text-red-600 text-sm mb-3">{error}</div>}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -40,7 +42,7 @@ export default function Admin() {
 
       <div className="rounded-xl ring-1 ring-black/5 bg-white/85 dark:bg-zinc-900/70 backdrop-blur p-4">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-semibold">Users</h2>
+          <SectionTitle className="text-lg font-semibold">Users</SectionTitle>
           <div className="text-sm text-zinc-500">{users.length} total (showing latest)</div>
         </div>
         <div className="overflow-auto">

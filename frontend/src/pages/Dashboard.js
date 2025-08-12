@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { motion } from 'framer-motion';
+import PageTitle from '../components/PageTitle';
 import { useGoals } from '../hooks/useGoals';
 import GoalCard from '../components/GoalCard';
 import SimpleGoalForm from '../components/SimpleGoalForm';
@@ -88,6 +89,13 @@ const Dashboard = () => {
     <div className="min-h-screen app-bg">
       {/* Animated Search */}
       <div className="w-full px-6 py-6">
+        {/* Page Title (desktop only; mobile uses the header title) */}
+        <div className="mb-4 hidden md:block">
+          <PageTitle className="text-2xl font-semibold text-gray-900 dark:text-zinc-100 tracking-tight">
+            Dashboard
+          </PageTitle>
+        </div>
+
         <div className="mb-8 flex justify-center">
           <motion.div
             className="relative"
@@ -99,7 +107,7 @@ const Dashboard = () => {
             <MagnifyingGlassIcon className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Search goals..."
+              placeholder="Search.."
               value={searchTerm}
               onFocus={() => setSearchFocused(true)}
               onBlur={() => setSearchFocused(false)}

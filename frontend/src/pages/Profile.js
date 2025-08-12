@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { userProfileApi } from '../services/api';
+import { userProfileApi, jobRoleApi } from '../services/api';
 import { getAccessToken, onAuthStateChange } from '../supabase/authClient';
 import { motion } from 'framer-motion';
+import { useJobRoles } from '../hooks/useJobRoles';
+import PageTitle from '../components/PageTitle';
+import SectionTitle from '../components/SectionTitle';
 
 const experienceOptions = [
   { value: 'entry', label: 'Entry Level', description: '0-2 years experience' },
@@ -12,11 +15,41 @@ const experienceOptions = [
   { value: 'expert', label: 'Expert', description: '15+ years, domain authority' }
 ];
 
-const industryOptions = [
-  'Technology', 'Healthcare', 'Finance', 'Education', 'Manufacturing', 
-  'Retail', 'Consulting', 'Media', 'Non-profit', 'Government',
-  'Real Estate', 'Transportation', 'Energy', 'Legal', 'Marketing'
-];
+const industryToRoles = {
+  Technology: [
+    'Software Engineer', 'Product Manager', 'Data Scientist', 'DevOps Engineer', 'UX Designer', 'QA Engineer', 'Solutions Architect', 'IT Support Specialist'
+  ],
+  Healthcare: [
+    'Registered Nurse', 'Physician Assistant', 'Healthcare Administrator', 'Clinical Research Coordinator', 'Medical Technologist'
+  ],
+  Finance: [
+    'Financial Analyst', 'Accountant', 'Investment Analyst', 'Risk Manager', 'Compliance Analyst'
+  ],
+  Education: [
+    'Teacher', 'Instructional Designer', 'Academic Advisor', 'School Administrator'
+  ],
+  Manufacturing: [
+    'Operations Manager', 'Process Engineer', 'Quality Assurance Manager', 'Supply Chain Analyst'
+  ],
+  Consulting: [
+    'Management Consultant', 'Business Analyst', 'Strategy Consultant', 'Implementation Consultant'
+  ],
+  'Media': [
+    'Content Strategist', 'Digital Marketing Specialist', 'Producer', 'Social Media Manager'
+  ],
+  'Non-profit': [
+    'Program Manager', 'Development Coordinator', 'Grant Writer'
+  ],
+  Government: [
+    'Policy Analyst', 'Program Analyst', 'Contract Specialist'
+  ],
+  Retail: [
+    'Store Manager', 'Merchandiser', 'E-commerce Specialist'
+  ],
+  Energy: [
+    'Energy Analyst', 'Project Engineer', 'Environmental Specialist'
+  ],
+};
 
 export default function Profile({ sidebarOpen = false }) {
   const [loading, setLoading] = useState(true);
@@ -30,6 +63,56 @@ export default function Profile({ sidebarOpen = false }) {
     policies_accepted: false
   });
   const [originalProfile, setOriginalProfile] = useState(null);
+  const [industryJobRoles, setIndustryJobRoles] = useState([]);
+  const [industryJobRolesLoading, setIndustryJobRolesLoading] = useState(false);
+
+  const { jobRoles, loading: allJobRolesLoading } = useJobRoles();
+
+  // Fetch industry-specific job roles when industry changes
+  const fetchIndustryJobRoles = async (industry) => {
+    if (!industry) {
+      setIndustryJobRoles([]);
+      return;
+    }
+    
+    try {
+      setIndustryJobRolesLoading(true);
+      // Start with roles from API filtered by industry signals
+      const apiFiltered = jobRoles.filter(role => 
+        (role.industry && role.industry === industry) || 
+        role.title?.toLowerCase().includes(industry.toLowerCase()) ||
+        role.description?.toLowerCase().includes(industry.toLowerCase())
+      );
+
+      // Curated roles fallback for top industries
+      const curatedTitles = industryToRoles[industry] || [];
+      const curatedAsObjects = curatedTitles.map((title) => ({ id: `curated-${title.toLowerCase().replace(/\s+/g, '-')}`, title, description: '' }));
+
+      // Merge and de-duplicate by title (case-insensitive)
+      const merged = [...apiFiltered, ...curatedAsObjects];
+      const seen = new Set();
+      const deduped = merged.filter((r) => {
+        const key = (r.title || '').trim().toLowerCase();
+        if (!key || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+
+      setIndustryJobRoles(deduped);
+    } catch (err) {
+      console.error('Error fetching industry job roles:', err);
+      setIndustryJobRoles([]);
+    } finally {
+      setIndustryJobRolesLoading(false);
+    }
+  };
+
+  // Fetch industry job roles on initial load if industry is already selected
+  useEffect(() => {
+    if (profile.industry && jobRoles.length > 0) {
+      fetchIndustryJobRoles(profile.industry);
+    }
+  }, [jobRoles, profile.industry]);
 
   // Helper function to conditionally apply accent colors
   const getAccentColor = (baseColor, reducedColor = 'gray') => {
@@ -231,14 +314,9 @@ export default function Profile({ sidebarOpen = false }) {
             </div>
           </motion.div>
           
-          <motion.h1 
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.1, ease: "easeOut" }}
-            className="text-5xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-zinc-100 dark:to-zinc-300 bg-clip-text text-transparent mb-4"
-          >
+          <PageTitle className="text-5xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-zinc-100 dark:to-zinc-300 bg-clip-text text-transparent mb-4">
             Complete Your Profile
-          </motion.h1>
+          </PageTitle>
           
           <motion.p 
             initial={{ y: 20, opacity: 0 }}
@@ -263,7 +341,7 @@ export default function Profile({ sidebarOpen = false }) {
             <div className="relative z-10">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-4">
-                <span className="text-lg font-semibold text-gray-900 dark:text-zinc-100">Profile Completion</span>
+                <SectionTitle className="text-lg font-semibold text-gray-900 dark:text-zinc-100">Profile Completion</SectionTitle>
                 <button
                   onClick={() => fetchWithTimeout()}
                   className="p-2 text-accent-600 hover:text-accent-700 hover:bg-accent-50 dark:hover:bg-accent-900/20 rounded-lg transition-colors"
@@ -341,24 +419,99 @@ export default function Profile({ sidebarOpen = false }) {
                   <svg className="w-6 h-6 text-accent-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0H8m8 0a2 2 0 012 2v6a2 2 0 01-2 2H8a2 2 0 01-2-2V8a2 2 0 012-2z" />
                   </svg>
-                  What's your current role?
+                  What's your current or desired role?
                   <span className="text-red-500 ml-1">*</span>
                 </span>
               </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="e.g., Software Engineer, Product Manager, Data Analyst"
-                  value={profile.current_role}
-                  onChange={(e) => setProfile({ ...profile, current_role: e.target.value })}
-                  className="w-full px-6 py-4 border-2 border-gray-200 dark:border-zinc-700 rounded-2xl bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100 text-lg focus:ring-4 focus:ring-accent-500/20 focus:border-accent-500 transition-all duration-300 placeholder-gray-400 dark:placeholder-zinc-500"
-                  required
-                />
-                <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                  <div className="w-2 h-2 bg-accent-500 rounded-full animate-pulse"></div>
-                </div>
+
+              {/* Show current industry with Change link */}
+              <div className="ml-9 mt-1 flex items-center gap-2">
+                {profile.industry ? (
+                  <>
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-zinc-800 dark:text-zinc-200 ring-1 ring-black/5">
+                      {profile.industry}
+                    </span>
+                    <a href="#/account" className="text-sm text-accent-600 hover:text-accent-700 dark:text-accent-400 dark:hover:text-accent-300 underline">
+                      Change
+                    </a>
+                  </>
+                ) : null}
               </div>
-              <p className="text-sm text-gray-600 dark:text-zinc-400 ml-9">This helps us suggest relevant goals and opportunities</p>
+
+              {/* Role selection based on industry */}
+              {!profile.industry ? (
+                <div className="p-6 border-2 border-dashed border-gray-300 dark:border-zinc-600 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 text-center">
+                  <p className="text-gray-600 dark:text-zinc-400 mb-3">
+                    Set your industry in Account Settings to see relevant roles
+                  </p>
+                  <a href="#/account" className="btn-secondary inline-block">Go to Account Settings</a>
+                </div>
+              ) : industryJobRolesLoading ? (
+                <div className="p-6 border-2 border-gray-200 dark:border-zinc-700 rounded-2xl bg-white dark:bg-zinc-900 text-center">
+                  <div className="animate-spin w-6 h-6 border-2 border-accent-500 border-t-transparent rounded-full mx-auto mb-3"></div>
+                  <p className="text-gray-600 dark:text-zinc-400">Loading roles for {profile.industry}...</p>
+                </div>
+              ) : industryJobRoles.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {industryJobRoles.map((role, index) => (
+                    <motion.button
+                      key={role.id}
+                      type="button"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.4, delay: 0.5 + index * 0.1 }}
+                      onClick={() => setProfile({ ...profile, current_role: role.title })}
+                      className={`group relative p-4 rounded-xl border-2 transition-all duration-300 text-left hover:scale-105 hover:shadow-lg ${
+                        profile.current_role === role.title
+                          ? 'border-accent-500 bg-gradient-to-br from-accent-50 to-accent-100 dark:from-accent-900/30 dark:to-accent-800/20 ring-2 ring-accent-200 dark:ring-accent-700/50 shadow-lg'
+                          : 'border-gray-200 dark:border-zinc-700 hover:border-accent-300 dark:hover:border-accent-600 hover:bg-gradient-to-br hover:from-gray-50 hover:to-gray-100 dark:hover:from-zinc-800/60 dark:hover:to-zinc-700/60'
+                      }`}
+                    >
+                      <div className="font-semibold text-base text-gray-900 dark:text-zinc-100 mb-1">{role.title}</div>
+                      {role.description && (
+                        <div className="text-sm text-gray-600 dark:text-zinc-400 leading-relaxed line-clamp-2">{role.description}</div>
+                      )}
+                      {profile.current_role === role.title && (
+                        <div className="absolute top-3 right-3 w-5 h-5 bg-accent-500 rounded-full flex items-center justify-center">
+                          <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                      )}
+                    </motion.button>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-6 border-2 border-gray-200 dark:border-zinc-700 rounded-2xl bg-white dark:bg-zinc-900">
+                  <div className="flex items-center space-x-3">
+                    <svg className="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div>
+                      <p className="text-sm text-amber-800 dark:text-amber-200 font-medium">
+                        No specific roles found for {profile.industry}
+                      </p>
+                      <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+                        You can still enter your role manually below
+                      </p>
+                    </div>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Enter your role manually"
+                    value={profile.current_role}
+                    onChange={(e) => setProfile({ ...profile, current_role: e.target.value })}
+                    className="w-full mt-3 px-4 py-3 border-2 border-gray-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100 focus:ring-2 focus:ring-accent-500/20 focus:border-accent-500 transition-all duration-300 placeholder-gray-400 dark:placeholder-zinc-500"
+                  />
+                </div>
+              )}
+
+              <p className="text-sm text-gray-600 dark:text-zinc-400 ml-9">
+                {profile.industry 
+                  ? `Showing roles relevant to ${profile.industry}` 
+                  : 'Industry is managed in Account Settings'
+                }
+              </p>
             </div>
 
             {/* Experience Level - Enhanced */}
@@ -401,57 +554,25 @@ export default function Profile({ sidebarOpen = false }) {
               </div>
             </div>
 
-            {/* Industry - Enhanced */}
-            <div className="space-y-4">
-              <label className="block">
-                <span className="text-xl font-semibold text-gray-900 dark:text-zinc-100 flex items-center">
-                  <svg className="w-6 h-6 text-accent-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                  </svg>
-                  What industry are you in?
-                  <span className="text-red-500 ml-1">*</span>
-                </span>
-              </label>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {industryOptions.map((industry, index) => (
-                  <motion.button
-                    key={industry}
-                    type="button"
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.3, delay: 0.6 + index * 0.05 }}
-                    onClick={() => selectIndustry(industry)}
-                    className={`group p-4 rounded-xl border-2 transition-all duration-300 text-center hover:scale-105 hover:shadow-md ${
-                      profile.industry === industry
-                        ? 'border-accent-500 bg-gradient-to-br from-accent-50 to-accent-100 dark:from-accent-900/30 dark:to-accent-800/20 ring-2 ring-accent-200 dark:ring-accent-700/50'
-                        : 'border-gray-200 dark:border-zinc-700 hover:border-accent-300 dark:hover:border-accent-600 hover:bg-gradient-to-br hover:from-gray-50 hover:to-gray-100 dark:hover:from-zinc-800/60 dark:hover:to-zinc-700/60'
-                    }`}
-                  >
-                    <div className="font-medium text-gray-900 dark:text-zinc-100 group-hover:text-accent-700 dark:group-hover:text-accent-300 transition-colors">
-                      {industry}
-                    </div>
-                  </motion.button>
-                ))}
-              </div>
-            </div>
-
             {/* Terms & Privacy Status */}
             <div className="space-y-4">
-              <div className="flex items-center space-x-4">
-                <div className="flex-shrink-0">
-                  <svg className="w-6 h-6 text-accent-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
+              <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
+                <div className="flex items-start space-x-3 sm:space-x-4">
+                  <div className="flex-shrink-0 mt-1">
+                    <svg className="w-6 h-6 text-accent-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-zinc-100 leading-tight">
+                      Terms & Privacy Policy
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-zinc-400 mt-1 leading-relaxed">
+                      Legal agreements must be accepted before completing your profile
+                    </p>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <span className="text-xl font-semibold text-gray-900 dark:text-zinc-100">
-                    Terms & Privacy Policy
-                  </span>
-                  <p className="text-sm text-gray-600 dark:text-zinc-400 mt-1">
-                    Legal agreements must be accepted before completing your profile
-                  </p>
-                </div>
-                <div className="flex-shrink-0">
+                <div className="flex-shrink-0 sm:ml-auto">
                   {profile.policies_accepted ? (
                     <div className="flex items-center space-x-2 px-3 py-2 bg-green-100 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg">
                       <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -471,13 +592,13 @@ export default function Profile({ sidebarOpen = false }) {
               </div>
               
               {!profile.policies_accepted && (
-                <div className="ml-10 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl">
+                <div className="ml-0 sm:ml-10 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl">
                   <div className="flex items-start space-x-3">
                     <svg className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <div>
-                      <p className="text-sm text-amber-800 dark:text-amber-200 font-medium">
+                      <p className="text-sm text-amber-800 dark:text-amber-200 font-medium leading-relaxed">
                         Please accept the Terms of Service and Privacy Policy in{' '}
                         <a href="#/account" className="text-amber-900 dark:text-amber-100 underline font-medium hover:text-amber-700 dark:hover:text-amber-300 transition-colors">
                           Account Settings

@@ -87,7 +87,7 @@
     @apply text-gray-600 dark:text-zinc-300 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 dark:focus:ring-offset-zinc-900;
   }
   .btn-ghost:hover {
-    color: #94633a; /* accent-600 */
+    color: #2563eb; /* accent-600 - updated to blue */
   }
   
   /* Wireframe buttons */
@@ -132,21 +132,21 @@
   }
   .scroll-mask::before {
     left: 0;
-    background: linear-gradient(to right, rgba(250,247,242,1), rgba(250,247,242,0));
+    background: linear-gradient(to right, rgba(239,246,255,1), rgba(239,246,255,0));
   }
   .dark .scroll-mask::before {
     background: linear-gradient(to right, rgba(10,10,10,1), rgba(10,10,10,0));
   }
   .scroll-mask::after {
     right: 0;
-    background: linear-gradient(to left, rgba(250,247,242,1), rgba(250,247,242,0));
+    background: linear-gradient(to left, rgba(239,246,255,1), rgba(239,246,255,0));
   }
   .dark .scroll-mask::after {
     background: linear-gradient(to left, rgba(10,10,10,1), rgba(10,10,10,0));
   }
 
   .today-glow {
-    box-shadow: 0 0 0 1px rgba(0,0,0,0.04), 0 0 0 2px rgba(185,122,67,0.08), 0 0 18px rgba(185,122,67,0.18);
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.04), 0 0 0 2px rgba(37,99,235,0.08), 0 0 18px rgba(37,99,235,0.18);
   }
 
   .goal-chip {

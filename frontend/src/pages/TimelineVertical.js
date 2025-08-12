@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import SectionTitle from '../components/SectionTitle';
+import PageTitle from '../components/PageTitle';
 import { useGoals } from '../hooks/useGoals';
 import ProgressModal from '../components/ProgressModal';
 
@@ -93,14 +95,9 @@ export default function TimelineVertical() {
         >
           <div className="flex items-center justify-between">
             <div>
-              <motion.h1 
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.4, delay: 0.2 }}
-                className="text-3xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-700 dark:from-zinc-100 dark:via-zinc-200 dark:to-zinc-300 bg-clip-text text-transparent"
-              >
+              <PageTitle className="text-3xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-700 dark:from-zinc-100 dark:via-zinc-200 dark:to-zinc-300 bg-clip-text text-transparent">
                 Timeline
-              </motion.h1>
+              </PageTitle>
             </div>
             
             {/* Compact Filters */}
@@ -199,9 +196,9 @@ export default function TimelineVertical() {
               >
                 {/* Month Header */}
                 <div className="text-center mb-6 md:mb-8">
-                  <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-zinc-100 mb-2">
+                  <SectionTitle className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-zinc-100 mb-2">
                     {monthLabel(selectedMonth)}
-                  </h2>
+                  </SectionTitle>
                   <div className="w-12 md:w-16 h-1 bg-gradient-to-r from-accent-500 to-orange-500 rounded-full mx-auto" />
                   <p className="text-sm md:text-base text-gray-600 dark:text-zinc-400 mt-3">
                     {filteredEntries[selectedMonth]?.length || 0} goals
