@@ -5,6 +5,7 @@ import (
     "time"
     "goaltracker/database"
     "goaltracker/models"
+    "goaltracker/services"
     "github.com/gin-gonic/gin"
 )
 
@@ -25,6 +26,36 @@ func AdminUsers(c *gin.Context) {
         return
     }
     c.JSON(http.StatusOK, gin.H{"data": users})
+}
+
+// AdminAIStatus returns recent AI generation stats and current provider config.
+func AdminAIStatus(c *gin.Context) {
+    stats := services.GetAIStats()
+    var total, success int
+    var avgLatency int
+    for _, s := range stats.Items {
+        total++
+        if s.Success { success++ }
+        avgLatency += s.LatencyMs
+    }
+    if total > 0 { avgLatency = avgLatency / total }
+
+    var since *time.Time
+    if total > 0 {
+        t := stats.Items[0].Timestamp
+        since = &t
+    }
+
+    c.JSON(http.StatusOK, gin.H{
+        "data": gin.H{
+            "provider": services.CurrentAIProvider(),
+            "total_calls": total,
+            "success_calls": success,
+            "avg_latency_ms": avgLatency,
+            "window": "last_100",
+            "sample_since": since,
+        },
+    })
 }
 
 

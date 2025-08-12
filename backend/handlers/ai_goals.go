@@ -59,11 +59,20 @@ func GetAIGoalSuggestions(c *gin.Context) {
 	
 	// Generate AI suggestions
     aiService := services.NewAIService()
+    start := time.Now()
     suggestions, err := aiService.GeneratePersonalizedGoals(aiReq)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate AI suggestions"})
 		return
 	}
+    elapsed := time.Since(start)
+    provider := aiService.Provider()
+    services.RecordAIStat(services.AIStat{
+        Provider: provider,
+        Success:  true,
+        LatencyMs: int(elapsed.Milliseconds()),
+        Timestamp: time.Now(),
+    })
     
     // attach user ownership for any persisted AI entities (if/when saved later)
     _ = middleware.GetUserID

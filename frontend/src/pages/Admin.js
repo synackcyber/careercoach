@@ -6,17 +6,20 @@ import SectionTitle from '../components/SectionTitle';
 export default function Admin() {
   const [health, setHealth] = useState(null);
   const [users, setUsers] = useState([]);
+  const [aiStatus, setAiStatus] = useState(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
     const load = async () => {
       try {
-        const [{ data: h }, { data: u }] = await Promise.all([
+        const [{ data: h }, { data: u }, { data: a }] = await Promise.all([
           api.get('/admin/health'),
           api.get('/admin/users'),
+          api.get('/admin/ai-status'),
         ]);
         setHealth(h.data || null);
         setUsers(u.data || []);
+        setAiStatus(a.data || null);
       } catch (e) {
         setError('Failed to load admin data.');
       }
@@ -37,6 +40,17 @@ export default function Admin() {
         <div className="rounded-xl ring-1 ring-black/5 bg-white/85 dark:bg-zinc-900/70 backdrop-blur p-4">
           <div className="text-sm text-zinc-500">Server time (UTC)</div>
           <div className="text-xl">{health ? new Date(health.time).toLocaleString() : '—'}</div>
+        </div>
+        <div className="rounded-xl ring-1 ring-black/5 bg-white/85 dark:bg-zinc-900/70 backdrop-blur p-4">
+          <div className="text-sm text-zinc-500">AI Provider</div>
+          <div className="text-xl">{aiStatus ? aiStatus.provider : '—'}</div>
+          {aiStatus && (
+            <div className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">
+              <div>24h calls: {aiStatus.total_calls}</div>
+              <div>Success: {aiStatus.success_calls}</div>
+              <div>Avg latency: {aiStatus.avg_latency_ms} ms</div>
+            </div>
+          )}
         </div>
       </div>
 

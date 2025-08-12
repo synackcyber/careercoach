@@ -104,6 +104,7 @@ func main() {
         {
             admin.GET("/health", handlers.AdminHealth)
             admin.GET("/users", handlers.AdminUsers)
+            admin.GET("/ai-status", handlers.AdminAIStatus)
         }
     }
 	

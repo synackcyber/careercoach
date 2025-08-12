@@ -42,6 +42,31 @@ type AIGoalResponse struct {
 	CareerImpact            string    `json:"career_impact"`
 }
 
+// ---- In-memory AI stats for Admin status ----
+type AIStat struct {
+    Provider  string
+    Success   bool
+    LatencyMs int
+    Timestamp time.Time
+}
+
+var aiStats = struct {
+    Items []AIStat
+}{Items: []AIStat{}}
+
+func RecordAIStat(s AIStat) {
+    // Keep last 100 entries to bound memory
+    aiStats.Items = append(aiStats.Items, s)
+    if len(aiStats.Items) > 100 {
+        aiStats.Items = aiStats.Items[len(aiStats.Items)-100:]
+    }
+}
+
+// Accessors for admin
+type AIStatsWindow struct { Items []AIStat }
+func GetAIStats() AIStatsWindow { return AIStatsWindow{Items: aiStats.Items} }
+func CurrentAIProvider() string { return getEnvOrDefault("AI_SUGGESTIONS_PROVIDER", "local") }
+
 func NewAIService() *AIService {
     // Lightweight env read to avoid tight coupling to config pkg
     provider := getEnvOrDefault("AI_SUGGESTIONS_PROVIDER", "local")
@@ -52,10 +77,13 @@ func NewAIService() *AIService {
     }
 }
 
+func (ai *AIService) Provider() string { return ai.provider }
+
 func (ai *AIService) GeneratePersonalizedGoals(req GoalSuggestionRequest) ([]AIGoalResponse, error) {
     // If provider is openai and key present, attempt LLM; otherwise local
     if ai.provider == "openai" && ai.openAIKey != "" {
         if llm, err := ai.generateWithOpenAI(req); err == nil && len(llm) > 0 {
+            // record success stat here too
             return llm, nil
         }
         // fall back to local on any error
