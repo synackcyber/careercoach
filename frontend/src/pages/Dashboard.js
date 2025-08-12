@@ -1,13 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { MagnifyingGlassIcon, FlagIcon, XMarkIcon } from '@heroicons/react/24/outline';
-import { motion, AnimatePresence } from 'framer-motion';
-
+import { MagnifyingGlassIcon, FlagIcon } from '@heroicons/react/24/outline';
+import { motion } from 'framer-motion';
 import { useGoals } from '../hooks/useGoals';
-
 import GoalCard from '../components/GoalCard';
 import SimpleGoalForm from '../components/SimpleGoalForm';
-import ProgressModal from '../components/ProgressModal';
-import RoadmapModal from '../components/RoadmapModal';
 
 
 const Dashboard = ({ session }) => {
@@ -16,10 +12,6 @@ const Dashboard = ({ session }) => {
   const [searchFocused, setSearchFocused] = useState(false);
   const [showGoalForm, setShowGoalForm] = useState(false);
   const [editingGoal, setEditingGoal] = useState(null);
-  const [selectedGoal, setSelectedGoal] = useState(null);
-  const [showProgressModal, setShowProgressModal] = useState(false);
-  const [showRoadmapModal, setShowRoadmapModal] = useState(false);
-  const [selectedGoalForRoadmap, setSelectedGoalForRoadmap] = useState(null);
   const [currentGreetingIndex, setCurrentGreetingIndex] = useState(0);
   // const [showAISettings, setShowAISettings] = useState(false);
 
@@ -94,10 +86,7 @@ const Dashboard = ({ session }) => {
     setShowGoalForm(true);
   };
 
-  const handleGoalClick = (goal) => {
-    setSelectedGoalForRoadmap(goal);
-    setShowRoadmapModal(true);
-  };
+
 
   // (Filters UI removed) Keep filters state to support future server filtering via useGoals
 
@@ -289,7 +278,6 @@ const Dashboard = ({ session }) => {
                   goal={goal}
                   onEdit={handleEditGoal}
                   onDelete={handleDeleteGoal}
-                  onClick={handleGoalClick}
                   delayMs={Math.min(index * 100, 800)}
                 />
               ))}
@@ -309,23 +297,9 @@ const Dashboard = ({ session }) => {
         }}
       />
 
-      <ProgressModal
-        goal={selectedGoal}
-        isOpen={showProgressModal}
-        onClose={() => {
-          setShowProgressModal(false);
-          setSelectedGoal(null);
-        }}
-      />
 
-      <RoadmapModal
-        goal={selectedGoalForRoadmap}
-        isOpen={showRoadmapModal}
-        onClose={() => {
-          setShowRoadmapModal(false);
-          setSelectedGoalForRoadmap(null);
-        }}
-      />
+
+
 
       {/* AI Settings removed */}
     </div>
