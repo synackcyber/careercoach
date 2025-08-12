@@ -176,8 +176,8 @@ export default function NewGoal() {
             {/* If user has a profile with industry/role, show direct suggestions limited to 6 */}
             {userProfile && responsibilityId && (
               <div className="mt-2">
-                {/* Show 3 immediate suggestions based on profile */}
-                <AIGoalSuggestions responsibilityId={responsibilityId} userProfile={userProfile} limit={3} onGoalSelect={handleGoalSelect} />
+                {/* Show 6 immediate suggestions based on profile */}
+                <AIGoalSuggestions responsibilityId={responsibilityId} userProfile={userProfile} limit={6} onGoalSelect={handleGoalSelect} />
               </div>
             )}
 
