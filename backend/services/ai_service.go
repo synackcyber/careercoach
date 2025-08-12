@@ -1,11 +1,15 @@
 package services
 
 import (
-	"fmt"
-	"goaltracker/models"
-	"strings"
-    "time"
+    "bytes"
+    "encoding/json"
+    "fmt"
+    "goaltracker/models"
+    "io"
+    "net/http"
     "os"
+    "strings"
+    "time"
 )
 
 type AIService struct {
@@ -275,14 +279,106 @@ func (ai *AIService) generateCareerImpact(resp models.Responsibility, profile mo
 
 func (ai *AIService) generateWithOpenAI(req GoalSuggestionRequest) ([]AIGoalResponse, error) {
     // Guardrails / cost controls
-    // - Short prompt, few-shotless
-    // - max 6 suggestions
-    // - set an internal timeout to avoid runaway billing
-    _ = time.Second // placeholder; if real HTTP client added, apply timeout
+    // - Short prompt, JSON mode, temperature low, max tokens small
+    // - Single call, 10s timeout
+    if ai.openAIKey == "" {
+        return nil, fmt.Errorf("missing OPENAI_API_KEY")
+    }
 
-    // For now, return empty to keep compile path without external deps.
-    // In a follow-up, implement net/http call to OpenAI responses endpoint with structured JSON schema.
-    return []AIGoalResponse{}, nil
+    // Build compact profile context
+    p := req.UserProfile
+    r := req.Responsibility
+    prompt := fmt.Sprintf(
+        "Generate up to 6 concise, actionable professional development goals as JSON. Each goal must include: title (string), description (string), estimated_days (int: 7/14/21/30/60/90), priority (low|medium|high), tags (array of strings). Context: industry=%s, role=%s, experience=%s, responsibility_title=%s, responsibility_category=%s. Keep titles short and descriptions 1-2 sentences.",
+        safe(p.Industry), safe(p.CurrentRole), safe(p.ExperienceLevel), safe(r.Title), safe(r.Category),
+    )
+
+    // OpenAI chat completions JSON-mode style body
+    body := map[string]any{
+        "model":       ai.openAIModel,
+        "temperature": 0.2,
+        "max_tokens":  600,
+        "response_format": map[string]string{"type": "json_object"},
+        "messages": []map[string]string{
+            {"role": "system", "content": "You are a helpful assistant that returns STRICT JSON objects with a 'goals' array."},
+            {"role": "user", "content": prompt},
+        },
+    }
+
+    buf, _ := json.Marshal(body)
+    httpClient := &http.Client{Timeout: 10 * time.Second}
+    reqHTTP, _ := http.NewRequest("POST", "https://api.openai.com/v1/chat/completions", bytes.NewReader(buf))
+    reqHTTP.Header.Set("Authorization", "Bearer "+ai.openAIKey)
+    reqHTTP.Header.Set("Content-Type", "application/json")
+    resp, err := httpClient.Do(reqHTTP)
+    if err != nil {
+        return nil, err
+    }
+    defer resp.Body.Close()
+    if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+        b, _ := io.ReadAll(resp.Body)
+        return nil, fmt.Errorf("openai api error: %s", string(b))
+    }
+
+    var parsed struct {
+        Choices []struct {
+            Message struct {
+                Content string `json:"content"`
+            } `json:"message"`
+        } `json:"choices"`
+    }
+    if err := json.NewDecoder(resp.Body).Decode(&parsed); err != nil {
+        return nil, err
+    }
+    if len(parsed.Choices) == 0 {
+        return nil, fmt.Errorf("no choices")
+    }
+
+    // The content should be a JSON object with goals array
+    var j struct {
+        Goals []struct {
+            Title         string   `json:"title"`
+            Description   string   `json:"description"`
+            EstimatedDays int      `json:"estimated_days"`
+            Priority      string   `json:"priority"`
+            Tags          []string `json:"tags"`
+        } `json:"goals"`
+    }
+    if err := json.Unmarshal([]byte(parsed.Choices[0].Message.Content), &j); err != nil {
+        return nil, err
+    }
+    if len(j.Goals) == 0 {
+        return nil, fmt.Errorf("empty goals")
+    }
+
+    // Map to AIGoalResponse with sensible defaults
+    out := make([]AIGoalResponse, 0, len(j.Goals))
+    for _, g := range j.Goals {
+        prioScore := 0.6
+        switch strings.ToLower(g.Priority) {
+        case "high": prioScore = 0.85
+        case "medium": prioScore = 0.65
+        case "low": prioScore = 0.45
+        }
+        out = append(out, AIGoalResponse{
+            Title:                   g.Title,
+            PersonalizedDescription: g.Description,
+            LearningPath:            []string{},
+            RealWorldScenarios:      []string{},
+            MarketRelevanceScore:    0.75,
+            DifficultyScore:         ai.calculateDifficultyScore(req.UserProfile.ExperienceLevel),
+            PriorityScore:           prioScore,
+            EstimatedDays:           g.EstimatedDays,
+            Prerequisites:           []string{},
+            SuccessMetrics:          []string{"Deliver measurable outcome"},
+            CertificationPath:       "",
+            CareerImpact:            fmt.Sprintf("Advances your %s capability in %s.", req.Responsibility.Title, req.UserProfile.Industry),
+        })
+        if len(out) >= 6 { // hard cap
+            break
+        }
+    }
+    return out, nil
 }
 
 func getEnvOrDefault(key, def string) string {
@@ -290,4 +386,8 @@ func getEnvOrDefault(key, def string) string {
         return v
     }
     return def
+}
+
+func safe(s string) string {
+    return strings.ReplaceAll(s, "\n", " ")
 }
