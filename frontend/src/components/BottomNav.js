@@ -39,18 +39,18 @@ export default function BottomNav({ route }) {
           );
         })}
         
-        {/* New Goal Button - Special styling */}
+        {/* Goal Suggestions Button - Special styling */}
         <motion.button
-          onClick={navTo('#/new-goal')}
+          onClick={navTo('#/suggestions')}
           whileTap={{ scale: 0.95 }}
           className="flex flex-col items-center justify-center w-16 h-16 rounded-xl bg-gradient-to-r from-accent-500 to-accent-600 text-white shadow-lg hover:shadow-xl transition-all duration-200"
         >
           <div className="w-5 h-5 mb-1">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/>
             </svg>
           </div>
-          <span className="text-xs font-medium">New Goal</span>
+          <span className="text-xs font-medium">Suggestions</span>
         </motion.button>
       </div>
     </motion.nav>

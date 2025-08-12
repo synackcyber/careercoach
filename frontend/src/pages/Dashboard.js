@@ -232,12 +232,12 @@ const Dashboard = ({ session }) => {
               </div>
               {!searchTerm && (
                 <motion.button 
-                  className="btn-primary bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200"
+                  className="btn-primary bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-700 hover:to-purple-800 shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => setShowGoalForm(true)}
+                  onClick={() => window.location.hash = '#/suggestions'}
                 >
-                  Create your first goal
+                  Get Goal Suggestions
                 </motion.button>
               )}
             </motion.div>

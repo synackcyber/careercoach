@@ -25,8 +25,8 @@ export default function DesktopNav({ expanded, onToggle, route, onLogout }) {
     window.location.hash = hash; 
     if (expanded) onToggle(); // Auto-close menu after navigation
   };
-  const onNewGoal = () => { 
-    window.location.hash = '#/new-goal'; 
+  const onGoalSuggestions = () => { 
+    window.location.hash = '#/suggestions'; 
     if (expanded) onToggle(); // Auto-close menu after navigation
   };
 
@@ -64,9 +64,9 @@ export default function DesktopNav({ expanded, onToggle, route, onLogout }) {
         {/* Unified nav list (includes New goal as first item) */}
         <div className={`flex-1 ${expanded ? 'overflow-auto' : 'overflow-hidden'}`}>
           <nav className="px-2 py-3 space-y-3">
-            {/* New goal lives here to keep icon order stable */}
+            {/* Goal Suggestions lives here to keep icon order stable */}
             <button
-              onClick={onNewGoal}
+              onClick={onGoalSuggestions}
               className={`w-full flex items-center ${expanded ? 'gap-3 px-3 justify-start' : 'px-0 justify-center'} h-12 py-0 rounded-xl ${expanded ? 'bg-gradient-to-r from-accent-500 via-accent-600 to-accent-700 hover:from-accent-600 hover:via-accent-700 hover:to-accent-800 text-white font-bold shadow-lg hover:shadow-xl ring-2 ring-accent-400/30 hover:ring-accent-400/50' : 'hover:bg-accent-50 hover:text-accent-600'} transform hover:scale-105 transition-all duration-200 relative overflow-hidden group mb-2`}
             >
               {/* Animated background glow - only when expanded */}
@@ -74,14 +74,14 @@ export default function DesktopNav({ expanded, onToggle, route, onLogout }) {
                 <div className="absolute inset-0 bg-gradient-to-r from-white/20 via-transparent to-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform -skew-x-12 translate-x-[-100%] group-hover:translate-x-[100%]"></div>
               )}
               
-              <span className={`w-7 h-7 aspect-square inline-flex items-center justify-center shrink-0 rounded-full ${expanded ? 'bg-white/20 text-white ring-2 ring-white/30 shadow-lg' : 'bg-accent-100 text-accent-600 ring-1 ring-accent-200'} text-[14px] leading-none select-none relative z-10`}>+</span>
+              <span className={`w-7 h-7 aspect-square inline-flex items-center justify-center shrink-0 rounded-full ${expanded ? 'bg-white/20 text-white ring-2 ring-white/30 shadow-lg' : 'bg-accent-100 text-accent-600 ring-1 ring-accent-200'} text-[14px] leading-none select-none relative z-10`}>💡</span>
               <motion.span
                 initial={false}
                 animate={{ opacity: expanded ? 1 : 0, x: expanded ? 0 : -6 }}
                 transition={{ duration: 0.16 }}
                 className={`overflow-hidden whitespace-nowrap transition-[max-width] duration-200 font-bold ${expanded ? 'max-w-[220px]' : 'max-w-0'}`}
               >
-                New Goal
+                Goal Suggestions
               </motion.span>
             </button>
 

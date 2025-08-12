@@ -3,7 +3,7 @@ import Dashboard from './pages/Dashboard';
 import MarketData from './pages/MarketData';
 import Profile from './pages/Profile';
 import AccountSettings from './pages/AccountSettings';
-import NewGoal from './pages/NewGoal';
+import GoalSuggestions from './pages/GoalSuggestions';
 import Admin from './pages/Admin';
 import Login from './auth/Login';
 import Callback from './auth/Callback';
@@ -126,8 +126,8 @@ function App() {
         return <Profile />;
       case '#/account':
         return <AccountSettings />;
-      case '#/new-goal':
-        return <NewGoal />;
+      case '#/suggestions':
+        return <GoalSuggestions />;
       case '#/market':
         return <MarketData />;
       case '#/admin':
