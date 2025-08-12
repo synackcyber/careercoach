@@ -3,7 +3,7 @@ import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { motion } from 'framer-motion';
 import PageTitle from '../components/PageTitle';
 import { useGoals } from '../hooks/useGoals';
-import { goalSuggestionApi, aiApi, userProfileApi } from '../services/api';
+import { aiApi } from '../services/api';
 import GoalCard from '../components/GoalCard';
 import SimpleGoalForm from '../components/SimpleGoalForm';
 import ProgressModal from '../components/ProgressModal';
@@ -20,8 +20,7 @@ const Dashboard = () => {
   // const [showAISettings, setShowAISettings] = useState(false);
 
   const { goals, loading, error, initialized, createGoal, updateGoal, deleteGoal } = useGoals(filters);
-  const [profileSuggestions, setProfileSuggestions] = useState([]);
-  const [prefetching, setPrefetching] = useState(false);
+  // Suggestions removed
   // Listen for global "open-new-goal" to open the form from nav components
   useEffect(() => {
     const handler = () => {
@@ -37,31 +36,7 @@ const Dashboard = () => {
     try { console.debug('[dashboard] goals length =', goals.length, 'loading =', loading, 'error =', error); } catch (_) {}
   }, [goals, loading, error]);
 
-  // Prefetch profile-based suggestions (authenticated)
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        setPrefetching(true);
-        const prof = await userProfileApi.getOrCreate();
-        // Use axios client with auth to fetch personalized suggestions
-        const resp = await goalSuggestionApi.getAll(); // not used; ensure client warm
-        const raw = await fetch((process.env.REACT_APP_API_URL || 'http://localhost:8080') + '/api/v1/suggestions/for-profile', {
-          headers: { 'Authorization': 'Bearer ' + (await (await import('../supabase/authClient')).getAccessToken()) }
-        }).catch(()=>null);
-        let list = [];
-        if (raw && raw.ok) {
-          const j = await raw.json(); list = j?.data || [];
-        }
-        if (mounted) setProfileSuggestions(list.slice(0,6));
-      } catch (_) {
-        if (mounted) setProfileSuggestions([]);
-      } finally {
-        if (mounted) setPrefetching(false);
-      }
-    })();
-    return () => { mounted = false; };
-  }, []);
+  // Suggestions removed
 
 
   const filteredGoals = goals
@@ -153,37 +128,7 @@ const Dashboard = () => {
           </motion.div>
         </motion.div>
 
-        {/* Suggested for you */}
-        {profileSuggestions.length > 0 && (
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-zinc-100">Suggested for you</h3>
-              <button className="text-sm text-accent-600 hover:text-accent-700" onClick={()=>window.location.hash = '#/new-goal'}>Create custom</button>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {profileSuggestions.map((s, idx) => (
-                <div key={s.id || idx} className="rounded-xl border-2 border-gray-200 dark:border-zinc-800 p-4 bg-white/95 dark:bg-zinc-900/95">
-                  <div className="font-semibold text-gray-900 dark:text-zinc-100 mb-1">{s.title}</div>
-                  <div className="text-sm text-gray-600 dark:text-zinc-400 mb-3 line-clamp-2">{s.description}</div>
-                  <div className="flex gap-2">
-                    <button className="btn-primary btn-wire-sm" onClick={() => {
-                      setEditingGoal({ title: s.title, description: s.description, priority: s.priority || 'medium' });
-                      setShowGoalForm(true);
-                    }}>Use</button>
-                    <button className="btn-secondary btn-wire-sm" onClick={() => {
-                      // Open form prefilled, then dispatch an event to refine SMART
-                      setEditingGoal({ title: s.title, description: s.description, priority: s.priority || 'medium' });
-                      setShowGoalForm(true);
-                      setTimeout(() => {
-                        try { document.querySelector('button[data-refine-smart]')?.click(); } catch (_) {}
-                      }, 220);
-                    }}>Refine SMART</button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        {/* Suggestions removed */}
 
         {/* Goals Grid. Hide empty-state until first load completes to avoid flash. */}
         {filteredGoals.length === 0 ? (

@@ -2,8 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import PageTitle from '../components/PageTitle';
 import { aiApi } from '../services/api';
-import { goalApi, userProfileApi, responsibilityApi } from '../services/api';
-import AIGoalSuggestions from '../components/AIGoalSuggestions';
+import { goalApi } from '../services/api';
 
 const priorities = ['low','medium','high'];
 
@@ -36,37 +35,7 @@ export default function NewGoal() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
-  // Profile context for suggestions
-  const [userProfile, setUserProfile] = useState(null);
-  const [responsibilityId, setResponsibilityId] = useState('');
-  const [showSuggestions, setShowSuggestions] = useState(false);
-
-  React.useEffect(() => {
-    userProfileApi.getOrCreate().then(({ data }) => {
-      const p = data?.data || {};
-      setUserProfile({
-        current_role: p.current_role || 'Professional',
-        experience_level: p.experience_level || 'mid',
-        industry: p.industry || 'Technology',
-        company_size: p.company_size || 'mid-size',
-        learning_style: p.learning_style || 'balanced',
-        available_hours_week: p.available_hours_week || 10,
-        career_goals: p.career_goals || '',
-        current_tools: p.current_tools || '[]',
-        skill_gaps: p.skill_gaps || '[]'
-      });
-    }).catch(() => {});
-  }, []);
-
-  // Fallback responsibility for suggestions (first available)
-  React.useEffect(() => {
-    if (!responsibilityId) {
-      responsibilityApi.getAll().then(({ data }) => {
-        const list = data?.data || [];
-        if (list.length > 0) setResponsibilityId(String(list[0].id));
-      }).catch(() => {});
-    }
-  }, [responsibilityId]);
+  // Suggestions removed: no profile/responsibility context needed
 
   const addTag = () => {
     const t = tagsInput.trim();
@@ -163,22 +132,7 @@ export default function NewGoal() {
     return lines;
   };
 
-  // When a suggestion is selected, prefill form (no auto-create)
-  const handlePrefill = (suggestion) => {
-    setTitle(suggestion.title || '');
-    setDescription(suggestion.description || suggestion.personalized_description || '');
-    if (suggestion.priority) setPriority(suggestion.priority);
-    if (suggestion.estimated_days) {
-      const d = new Date();
-      d.setDate(d.getDate() + Number(suggestion.estimated_days));
-      setDueDate(d.toISOString().slice(0,10));
-    }
-    if (Array.isArray(suggestion.tags) && suggestion.tags.length) {
-      const merged = Array.from(new Set([...(tags || []), ...suggestion.tags]));
-      setTags(merged);
-    }
-    // keep suggestions visible for more picks, or auto-collapse if desired
-  };
+  // Suggestions removed
 
   // KR editor removed for frictionless v1
 
@@ -262,25 +216,7 @@ export default function NewGoal() {
         variants={containerVariants}
       >
         <div className="bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl rounded-3xl shadow-2xl ring-1 ring-amber-200/50 dark:ring-amber-700/30 overflow-hidden relative p-6">
-          <div className="mb-4">
-              <button type="button" onClick={() => setShowSuggestions(s => !s)} className="btn-secondary w-full">
-                {showSuggestions ? 'Hide Suggested' : 'Suggested Goals'}
-              </button>
-          </div>
-          
           {error && <div className="text-red-600 mb-3 text-sm">{error}</div>}
-
-          {showSuggestions && (
-            <div className="mb-6 rounded-2xl ring-1 ring-black/5 bg-white/90 dark:bg-zinc-900/80 p-4">
-              <div className="flex items-center justify-between mb-2">
-                <div className="text-sm text-gray-700 dark:text-zinc-200">Suggestions based on your profile</div>
-                <a href="#/account" className="text-xs text-accent-600 hover:text-accent-700">Edit profile</a>
-              </div>
-              {userProfile && responsibilityId && (
-                <AIGoalSuggestions responsibilityId={responsibilityId} userProfile={userProfile} limit={6} onGoalSelect={handlePrefill} />
-              )}
-            </div>
-          )}
 
           {/* Optional OKR/SMART assistant */}
           {okrOpen && (

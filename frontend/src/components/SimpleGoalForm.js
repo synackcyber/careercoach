@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { XMarkIcon, ChevronDownIcon, SparklesIcon } from '@heroicons/react/24/outline';
 import { useJobRoles } from '../hooks/useJobRoles';
 import { useResponsibilities } from '../hooks/useResponsibilities';
-import { useGoalSuggestions } from '../hooks/useGoalSuggestions';
-import AIGoalSuggestions from './AIGoalSuggestions';
+// Suggestions removed from modal
 import api, { aiApi } from '../services/api';
 
 const SimpleGoalForm = ({ goal, onSubmit, onClose, isOpen }) => {
@@ -16,7 +15,7 @@ const SimpleGoalForm = ({ goal, onSubmit, onClose, isOpen }) => {
   const [loading, setLoading] = useState(false);
   
   const { responsibilities, loading: respLoading } = useResponsibilities(selectedJobRoleId);
-  const { suggestions, loading: suggestionsLoading } = useGoalSuggestions(selectedResponsibilityId);
+  // const { suggestions, loading: suggestionsLoading } = useGoalSuggestions(selectedResponsibilityId);
   
   const [formData, setFormData] = useState({
     title: goal?.title || '',
@@ -83,16 +82,7 @@ const SimpleGoalForm = ({ goal, onSubmit, onClose, isOpen }) => {
     setCustomGoal(false);
   };
 
-  const handleSuggestionSelect = (suggestion) => {
-    setSelectedSuggestion(suggestion);
-    setFormData({
-      ...formData,
-      title: suggestion.title,
-      description: suggestion.description,
-      priority: suggestion.priority
-    });
-    setCustomGoal(false);
-  };
+  // Suggestions removed
 
 
   const handleCustomGoal = () => {
@@ -282,69 +272,7 @@ const SimpleGoalForm = ({ goal, onSubmit, onClose, isOpen }) => {
               </div>
               
               
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                {goalType === 'ai-powered' ? 'AI-Powered goal suggestions' : 'General goal suggestions'}
-              </label>
-              
-              {goalType === 'ai-powered' ? (
-                <AIGoalSuggestions 
-                  responsibilityId={selectedResponsibilityId}
-                  onGoalSelect={(aiGoal) => {
-                    setSelectedSuggestion(aiGoal);
-                    setFormData({
-                      ...formData,
-                      title: aiGoal.title,
-                      description: aiGoal.personalized_description || aiGoal.description,
-                      priority: aiGoal.priority || 'medium'
-                    });
-                    setCustomGoal(false);
-                  }}
-                />
-              ) : suggestionsLoading ? (
-                <div className="border rounded-lg p-4 text-center">
-                  <div className="animate-spin w-6 h-6 border-2 border-accent-600 border-t-transparent rounded-full mx-auto mb-2"></div>
-                  Loading suggestions...
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {suggestions.map((suggestion) => (
-                    <div
-                      key={suggestion.id}
-                        className={`border rounded-lg p-4 cursor-pointer transition-all duration-200 ${
-                          selectedSuggestion?.id === suggestion.id
-                            ? 'border-accent-500 bg-accent-50'
-                            : 'border-gray-200 hover:border-accent-300 hover:bg-gray-50'
-                        }`}
-                      onClick={() => handleSuggestionSelect(suggestion)}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h4 className="font-medium text-gray-900 mb-1">{suggestion.title}</h4>
-                          <p className="text-sm text-gray-600 mb-2">{suggestion.description}</p>
-                          <div className="flex items-center space-x-3 text-xs">
-                            <span className={`status-badge ${
-                              suggestion.priority === 'high' ? 'priority-high' :
-                              suggestion.priority === 'medium' ? 'priority-medium' : 'priority-low'
-                            }`}>
-                              {suggestion.priority} priority
-                            </span>
-                            <span className="text-gray-500">📅 {suggestion.estimated_duration}</span>
-                          </div>
-                        </div>
-                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                          selectedSuggestion?.id === suggestion.id
-                            ? 'border-accent-500 bg-accent-500'
-                            : 'border-gray-300'
-                        }`}>
-                          {selectedSuggestion?.id === suggestion.id && (
-                            <div className="w-2 h-2 bg-white rounded-full"></div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+              {/* Suggestions removed from modal UI */}
               
               {/* Custom Goal Option - available for all goal types */}
               {goalType !== 'ai-powered' && (
