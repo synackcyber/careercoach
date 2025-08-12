@@ -4,7 +4,7 @@ import axios from 'axios';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || '/api/v1';
 
-const AIGoalSuggestions = ({ responsibilityId, onGoalSelect }) => {
+const AIGoalSuggestions = ({ responsibilityId, onGoalSelect, userProfile: userProfileProp, limit = 6 }) => {
   const [aiSuggestions, setAiSuggestions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [marketTrends, setMarketTrends] = useState([]);
@@ -20,37 +20,34 @@ const AIGoalSuggestions = ({ responsibilityId, onGoalSelect }) => {
     try {
       setLoading(true);
       
-      // Get responsibility details (if needed for future enhancements)
-      // const responsibilityResponse = await axios.get(`${API_BASE_URL}/responsibilities/${responsibilityId}`);
-      // const responsibility = responsibilityResponse.data;
-      
-      // Create a basic user profile (in production, this would come from authenticated user)
-      const userProfile = {
-        current_role: "Professional",
-        experience_level: "mid",
-        industry: "Technology",
-        company_size: "mid-size",
-        learning_style: "balanced",
+      // Build a user profile: prefer provided prop, fallback to a reasonable default
+      const userProfile = userProfileProp || {
+        current_role: 'Professional',
+        experience_level: 'mid',
+        industry: 'Technology',
+        company_size: 'mid-size',
+        learning_style: 'balanced',
         available_hours_week: 10,
-        career_goals: "Advance in current role and develop new skills",
-        current_tools: "[]",
-        skill_gaps: "[]"
+        career_goals: 'Advance in current role and develop new skills',
+        current_tools: '[]',
+        skill_gaps: '[]'
       };
       
       const requestData = {
         user_profile: userProfile,
         responsibility_id: parseInt(responsibilityId),
         market_trends: [
-          "AI/ML Engineering",
-          "Cloud-Native Development",
-          "DevOps Practices",
-          "Security-First Approach"
+          'AI/ML Engineering',
+          'Cloud-Native Development',
+          'DevOps Practices',
+          'Security-First Approach'
         ],
-        company_context: "Modern technology company focusing on growth and innovation"
+        company_context: 'Modern technology company focusing on growth and innovation'
       };
       
       const response = await axios.post(`${API_BASE_URL}/ai/goal-suggestions`, requestData);
-      setAiSuggestions(response.data.data || []);
+      const data = Array.isArray(response.data?.data) ? response.data.data : [];
+      setAiSuggestions(limit ? data.slice(0, limit) : data);
       setMarketTrends(requestData.market_trends);
     } catch (error) {
       console.error('Error fetching AI suggestions:', error);
@@ -81,7 +78,8 @@ const AIGoalSuggestions = ({ responsibilityId, onGoalSelect }) => {
         ai_generated: true,
         learning_path: suggestion.learning_path,
         success_metrics: suggestion.success_metrics,
-        estimated_days: suggestion.estimated_days
+        estimated_days: suggestion.estimated_days,
+        tags: suggestion.tags || []
       });
     }
   };

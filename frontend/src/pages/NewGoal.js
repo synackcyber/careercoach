@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import PageTitle from '../components/PageTitle';
-import { goalApi, jobRoleApi, responsibilityApi } from '../services/api';
+import { goalApi, jobRoleApi, responsibilityApi, userProfileApi } from '../services/api';
 import AIGoalSuggestions from '../components/AIGoalSuggestions';
 
 const priorities = ['low','medium','high'];
@@ -19,6 +19,7 @@ export default function NewGoal() {
   const [responsibilityId, setResponsibilityId] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [userProfile, setUserProfile] = useState(null);
 
   React.useEffect(() => {
     let mounted = true;
@@ -46,6 +47,23 @@ export default function NewGoal() {
       .catch(() => {});
     return () => { mounted = false; };
   }, [jobRoleId]);
+
+  React.useEffect(() => {
+    userProfileApi.getOrCreate().then(({ data }) => {
+      const p = data?.data || {};
+      setUserProfile({
+        current_role: p.current_role || 'Professional',
+        experience_level: p.experience_level || 'mid',
+        industry: p.industry || 'Technology',
+        company_size: p.company_size || 'mid-size',
+        learning_style: p.learning_style || 'balanced',
+        available_hours_week: p.available_hours_week || 10,
+        career_goals: p.career_goals || '',
+        current_tools: p.current_tools || '[]',
+        skill_gaps: p.skill_gaps || '[]'
+      });
+    }).catch(() => {});
+  }, []);
 
   const addTag = () => {
     const t = tagsInput.trim();
@@ -127,31 +145,37 @@ export default function NewGoal() {
 
           {/* AI Generate Panel */}
           <div className="mb-6 rounded-2xl ring-1 ring-black/5 bg-white/90 dark:bg-zinc-900/80 p-4">
-            <div className="mb-3">
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-sm text-gray-700 dark:text-zinc-200">Personalized suggestions based on your profile</div>
+              <a href="#/account" className="text-xs text-accent-600 hover:text-accent-700">Update profile</a>
+            </div>
+            {/* If user has a profile with industry/role, show direct suggestions limited to 6 */}
+            {userProfile && (
+              <div className="mt-2">
+                {/* If a responsibility is chosen, we pass both; otherwise backend will rely on profile context */}
+                <AIGoalSuggestions responsibilityId={responsibilityId || 1} userProfile={userProfile} limit={6} onGoalSelect={handleGoalSelect} />
+              </div>
+            )}
+
+            {/* Optional: advanced targeting via role/responsibility */}
+            <div className="mt-4">
               <div className="text-sm font-medium text-gray-700 dark:text-zinc-200 mb-1">Job role (optional)</div>
               <select className="input-field w-full" value={jobRoleId} onChange={(e) => setJobRoleId(e.target.value)}>
                 <option value="">None</option>
                 {jobRoles.map(r => <option key={r.id} value={r.id}>{r.title}</option>)}
               </select>
+              {jobRoleId && (
+                <div className="mt-2">
+                  <div className="text-sm font-medium text-gray-700 dark:text-zinc-200 mb-1">Responsibility</div>
+                  <select className="input-field w-full" value={responsibilityId} onChange={(e) => setResponsibilityId(e.target.value)}>
+                    <option value="">Select responsibility</option>
+                    {responsibilities.map((r) => (
+                      <option key={r.id} value={r.id}>{r.title}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
-            {jobRoleId && (
-              <div className="mb-3">
-                <div className="text-sm font-medium text-gray-700 dark:text-zinc-200 mb-1">Responsibility</div>
-                <select className="input-field w-full" value={responsibilityId} onChange={(e) => setResponsibilityId(e.target.value)}>
-                  <option value="">Select responsibility</option>
-                  {responsibilities.map((r) => (
-                    <option key={r.id} value={r.id}>{r.title}</option>
-                  ))}
-                </select>
-                <p className="text-xs text-gray-500 mt-1">Select a responsibility to generate tailored suggestions.</p>
-              </div>
-            )}
-
-            {responsibilityId && (
-              <div className="mt-4">
-                <AIGoalSuggestions responsibilityId={responsibilityId} onGoalSelect={handleGoalSelect} />
-              </div>
-            )}
           </div>
 
           <motion.form onSubmit={onSave} className="space-y-5" initial={false}>
