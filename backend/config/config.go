@@ -63,8 +63,12 @@ func Load() *Config {
         OpenAIModel:           getEnvOrDefault("OPENAI_MODEL", "gpt-4o-mini"),
 	}
 	
-	// Safe debug logging
-	fmt.Printf("Config loaded - DBHost: %s, GinMode: %s\n", config.DBHost, config.GinMode)
+	// Safe debug logging - only non-sensitive config values
+	fmt.Printf("Config loaded - DBHost: %s, GinMode: %s, APIPort: %s\n", 
+		config.DBHost, config.GinMode, config.APIPort)
+	fmt.Printf("Auth configured: OIDC=%t, Supabase=%t\n", 
+		config.OIDCIssuerURL != "", config.SupabaseJWTSecret != "")
+	fmt.Printf("AI provider: %s\n", config.AISuggestionsProvider)
 	
 	return config
 }

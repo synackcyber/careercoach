@@ -55,7 +55,7 @@ export default function TimelineVertical() {
 
   const openGoal = (g) => { setSelectedGoal(g); setShowProgressModal(true); };
 
-  // Auto-select current month
+  // Auto-select current month if present, otherwise most recent month (rightmost)
   useEffect(() => {
     if (months.length > 0 && !selectedMonth) {
       const currentDate = new Date();
@@ -63,7 +63,7 @@ export default function TimelineVertical() {
       if (months.includes(currentMonth)) {
         setSelectedMonth(currentMonth);
       } else {
-        setSelectedMonth(months[0]);
+        setSelectedMonth(months[months.length - 1]);
       }
     }
   }, [months, selectedMonth]);

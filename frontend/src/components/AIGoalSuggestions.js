@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { SparklesIcon, ChartBarIcon, ClockIcon, AcademicCapIcon, TrophyIcon } from '@heroicons/react/24/outline';
-import axios from 'axios';
-
-const API_BASE_URL = process.env.REACT_APP_API_URL || '/api/v1';
+import { aiApi } from '../services/api';
 
 const synthesizeFallback = ({ userProfile, responsibilityTitle = 'Core Responsibility', limit = 6 }) => {
   const role = userProfile?.current_role || 'Professional';
@@ -108,7 +106,7 @@ const AIGoalSuggestions = ({ responsibilityId, onGoalSelect, userProfile: userPr
       
       let data = [];
       try {
-        const response = await axios.post(`${API_BASE_URL}/ai/goal-suggestions`, requestData);
+        const response = await aiApi.generateGoalSuggestions(requestData);
         data = Array.isArray(response.data?.data) ? response.data.data : [];
       } catch (e) {
         // Ignore API error; fallback below
@@ -234,5 +232,4 @@ const AIGoalSuggestions = ({ responsibilityId, onGoalSelect, userProfile: userPr
   );
 };
 
-export default AIGoalSuggestions;
 export default AIGoalSuggestions;

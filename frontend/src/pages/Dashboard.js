@@ -3,6 +3,7 @@ import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { motion } from 'framer-motion';
 import PageTitle from '../components/PageTitle';
 import { useGoals } from '../hooks/useGoals';
+import { goalSuggestionApi, aiApi, userProfileApi } from '../services/api';
 import GoalCard from '../components/GoalCard';
 import SimpleGoalForm from '../components/SimpleGoalForm';
 import ProgressModal from '../components/ProgressModal';
@@ -18,7 +19,9 @@ const Dashboard = () => {
   const [showProgressModal, setShowProgressModal] = useState(false);
   // const [showAISettings, setShowAISettings] = useState(false);
 
-  const { goals, loading, error, createGoal, updateGoal, deleteGoal } = useGoals(filters);
+  const { goals, loading, error, initialized, createGoal, updateGoal, deleteGoal } = useGoals(filters);
+  const [profileSuggestions, setProfileSuggestions] = useState([]);
+  const [prefetching, setPrefetching] = useState(false);
   // Listen for global "open-new-goal" to open the form from nav components
   useEffect(() => {
     const handler = () => {
@@ -33,6 +36,32 @@ const Dashboard = () => {
   useEffect(() => {
     try { console.debug('[dashboard] goals length =', goals.length, 'loading =', loading, 'error =', error); } catch (_) {}
   }, [goals, loading, error]);
+
+  // Prefetch profile-based suggestions (authenticated)
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        setPrefetching(true);
+        const prof = await userProfileApi.getOrCreate();
+        // Use axios client with auth to fetch personalized suggestions
+        const resp = await goalSuggestionApi.getAll(); // not used; ensure client warm
+        const raw = await fetch((process.env.REACT_APP_API_URL || 'http://localhost:8080') + '/api/v1/suggestions/for-profile', {
+          headers: { 'Authorization': 'Bearer ' + (await (await import('../supabase/authClient')).getAccessToken()) }
+        }).catch(()=>null);
+        let list = [];
+        if (raw && raw.ok) {
+          const j = await raw.json(); list = j?.data || [];
+        }
+        if (mounted) setProfileSuggestions(list.slice(0,6));
+      } catch (_) {
+        if (mounted) setProfileSuggestions([]);
+      } finally {
+        if (mounted) setPrefetching(false);
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
 
 
   const filteredGoals = goals
@@ -96,15 +125,22 @@ const Dashboard = () => {
           </PageTitle>
         </div>
 
-        <div className="mb-8 flex justify-center">
+        <motion.div
+          className="mb-8 flex justify-center"
+          initial={{ opacity: 0, y: -12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: 'easeOut' }}
+        >
           <motion.div
             className="relative"
-            initial={false}
-            animate={{ width: (searchFocused || searchTerm) ? '100%' : '60%' }}
+            initial={{ scale: 0.98 }}
+            animate={{ width: (searchFocused || searchTerm) ? '100%' : '60%', scale: 1 }}
             transition={{ type: 'spring', stiffness: 320, damping: 40 }}
             style={{ minWidth: (searchFocused || searchTerm) ? undefined : 280 }}
           >
-            <MagnifyingGlassIcon className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <motion.span initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1, duration: 0.3 }}>
+              <MagnifyingGlassIcon className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            </motion.span>
             <input
               type="text"
               placeholder="Search.."
@@ -115,53 +151,68 @@ const Dashboard = () => {
               className="input-field pl-10 w-full"
             />
           </motion.div>
-        </div>
+        </motion.div>
 
-        {/* Goals Grid */}
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, index) => (
-              <div key={index} className="bg-white/85 dark:bg-zinc-900/70 backdrop-blur rounded-2xl ring-1 ring-black/5 shadow-card p-6 animate-pulse">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="h-6 bg-gray-200 dark:bg-zinc-700 rounded-lg w-3/4"></div>
-                  <div className="h-4 w-4 bg-gray-200 dark:bg-zinc-700 rounded"></div>
+        {/* Suggested for you */}
+        {profileSuggestions.length > 0 && (
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-zinc-100">Suggested for you</h3>
+              <button className="text-sm text-accent-600 hover:text-accent-700" onClick={()=>window.location.hash = '#/new-goal'}>Create custom</button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {profileSuggestions.map((s, idx) => (
+                <div key={s.id || idx} className="rounded-xl border-2 border-gray-200 dark:border-zinc-800 p-4 bg-white/95 dark:bg-zinc-900/95">
+                  <div className="font-semibold text-gray-900 dark:text-zinc-100 mb-1">{s.title}</div>
+                  <div className="text-sm text-gray-600 dark:text-zinc-400 mb-3 line-clamp-2">{s.description}</div>
+                  <div className="flex gap-2">
+                    <button className="btn-primary btn-wire-sm" onClick={() => {
+                      setEditingGoal({ title: s.title, description: s.description, priority: s.priority || 'medium' });
+                      setShowGoalForm(true);
+                    }}>Use</button>
+                    <button className="btn-secondary btn-wire-sm" onClick={() => {
+                      // Open form prefilled, then dispatch an event to refine SMART
+                      setEditingGoal({ title: s.title, description: s.description, priority: s.priority || 'medium' });
+                      setShowGoalForm(true);
+                      setTimeout(() => {
+                        try { document.querySelector('button[data-refine-smart]')?.click(); } catch (_) {}
+                      }, 220);
+                    }}>Refine SMART</button>
+                  </div>
                 </div>
-                <div className="space-y-3">
-                  <div className="h-4 bg-gray-200 dark:bg-zinc-700 rounded w-full"></div>
-                  <div className="h-4 bg-gray-200 dark:bg-zinc-700 rounded w-2/3"></div>
-                  <div className="h-4 bg-gray-200 dark:bg-zinc-700 rounded w-1/2"></div>
-                </div>
-                <div className="flex items-center justify-between mt-6">
-                  <div className="h-3 bg-gray-200 dark:bg-zinc-700 rounded w-20"></div>
-                  <div className="h-8 bg-gray-200 dark:bg-zinc-700 rounded-lg w-20"></div>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        ) : filteredGoals.length === 0 ? (
-          <div className="text-center py-12">
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              {searchTerm ? 'No active goals found' : 'No active goals yet'}
-            </h3>
-            <p className="text-gray-500 mb-6">
-              {searchTerm 
-                ? 'Try adjusting your search or create a new active goal' 
-                : 'Create your first active goal to get started on your journey'
-              }
-            </p>
-            {!searchTerm && (
-              <button className="btn-primary" onClick={() => setShowGoalForm(true)}>Create a goal</button>
-            )}
-          </div>
+        )}
+
+        {/* Goals Grid. Hide empty-state until first load completes to avoid flash. */}
+        {filteredGoals.length === 0 ? (
+          (!initialized || loading) ? null : (
+            <div className="text-center py-12">
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                {searchTerm ? 'No active goals found' : 'No active goals yet'}
+              </h3>
+              <p className="text-gray-500 mb-6">
+                {searchTerm 
+                  ? 'Try adjusting your search or create a new active goal' 
+                  : 'Create your first active goal to get started on your journey'
+                }
+              </p>
+              {!searchTerm && (
+                <button className="btn-primary" onClick={() => setShowGoalForm(true)}>Create a goal</button>
+              )}
+            </div>
+          )
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredGoals.map(goal => (
+            {filteredGoals.map((goal, index) => (
               <GoalCard
                 key={goal.id}
                 goal={goal}
                 onEdit={handleEditGoal}
                 onDelete={handleDeleteGoal}
                 onClick={handleGoalClick}
+                delayMs={Math.min(index * 70, 700)}
               />
             ))}
           </div>

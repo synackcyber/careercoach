@@ -59,8 +59,16 @@ export default function Profile({ sidebarOpen = false }) {
     id: null, 
     current_role: '', 
     experience_level: 'mid', 
-    industry: '',
-    policies_accepted: false
+    industry: 'Technology',
+    policies_accepted: false,
+    it_profile: {
+      role: { current: '', level: 'Mid', track: 'IC', target: '' },
+      subdomains: [],
+      frameworks: [], // [{ name, level }]
+      certifications: [], // [{ name, status, expires, planned_by }]
+      platforms: [], // [{ name, depth, last_used }]
+      evidence: [], // [{ title, link }]
+    }
   });
   const [originalProfile, setOriginalProfile] = useState(null);
   const [industryJobRoles, setIndustryJobRoles] = useState([]);
@@ -122,19 +130,27 @@ export default function Profile({ sidebarOpen = false }) {
     return baseColor;
   };
 
-  // Check if there are unsaved changes
+  // Check if there are unsaved changes for core required fields
   const hasChanges = () => {
     if (!originalProfile) return false;
     return (
       profile.current_role !== originalProfile.current_role ||
-      profile.experience_level !== originalProfile.experience_level ||
-      profile.industry !== originalProfile.industry
+      profile.experience_level !== originalProfile.experience_level
     );
   };
 
-  // Check if profile is complete (all required fields filled)
+  // Profile completion across core and IT sections (for progress only)
+  const progressSegments = [
+    { key: 'role', label: 'Role', done: !!profile.current_role },
+    { key: 'experience', label: 'Experience', done: !!profile.experience_level },
+    { key: 'platforms', label: 'Platforms', done: (profile.it_profile?.platforms || []).length > 0 },
+    { key: 'frameworks', label: 'Frameworks', done: (profile.it_profile?.frameworks || []).length > 0 },
+    { key: 'subdomains', label: 'Subdomains', done: (profile.it_profile?.subdomains || []).length > 0 },
+  ];
+
+  // Only core required fields gate the Save button
   const isProfileComplete = () => {
-    return profile.current_role && profile.experience_level && profile.industry;
+    return profile.current_role && profile.experience_level;
   };
 
 
@@ -202,14 +218,37 @@ export default function Profile({ sidebarOpen = false }) {
         privacyType: typeof p.privacy_accepted_at
       }); } catch (_) {}
       
+      // Parse IT profile JSON if present
+      let itProfile = {
+        role: { current: '', level: 'Mid', track: 'IC', target: '' },
+        subdomains: [],
+        frameworks: [],
+        certifications: [],
+        platforms: [],
+        evidence: [],
+      };
+      try {
+        console.debug('[profile] RAW it_profile from server:', p.it_profile, 'type:', typeof p.it_profile);
+        if (p.it_profile) {
+          const parsed = typeof p.it_profile === 'string' ? JSON.parse(p.it_profile || '{}') : (p.it_profile || {});
+          console.debug('[profile] PARSED it_profile:', parsed);
+          itProfile = { ...itProfile, ...parsed };
+          console.debug('[profile] MERGED itProfile:', itProfile);
+        }
+      } catch (e) {
+        try { console.warn('[profile] failed to parse it_profile', e); } catch (_) {}
+      }
+
       const profileData = {
         id: p.id,
         current_role: p.current_role || '',
         experience_level: p.experience_level || 'mid',
-        industry: p.industry || '',
+        industry: p.industry || 'Technology',
         policies_accepted: policiesAccepted,
+        it_profile: itProfile,
       };
       try { console.debug('[profile] final profileData.policies_accepted:', profileData.policies_accepted); } catch (_) {}
+      try { console.debug('[profile] LOADED it_profile from server:', JSON.stringify(itProfile, null, 2)); } catch (_) {}
       setProfile(profileData);
       setOriginalProfile(profileData); // Store original for change detection
     } catch (e) {
@@ -240,7 +279,7 @@ export default function Profile({ sidebarOpen = false }) {
       
 
       
-      if (!profile.current_role || !profile.experience_level || !profile.industry) {
+      if (!profile.current_role || !profile.experience_level) {
         setError('Please complete all required fields');
         return;
       }
@@ -249,6 +288,7 @@ export default function Profile({ sidebarOpen = false }) {
         current_role: profile.current_role,
         experience_level: profile.experience_level,
         industry: profile.industry,
+        it_profile: profile.it_profile,
       });
       
       // Update original profile to reflect saved state
@@ -256,7 +296,7 @@ export default function Profile({ sidebarOpen = false }) {
       localStorage.removeItem('onboarding_gate');
       
       // Only redirect if this was a new profile completion
-      if (!originalProfile?.current_role || !originalProfile?.experience_level || !originalProfile?.industry) {
+      if (!originalProfile?.current_role || !originalProfile?.experience_level) {
         window.location.hash = '#/';
       }
     } catch (e) {
@@ -265,14 +305,188 @@ export default function Profile({ sidebarOpen = false }) {
       setSaving(false);
     }
   };
+  // --- IT Profile helpers ---
+  const itSubdomainOptions = ['Cloud', 'DevOps/SRE', 'Security', 'ITSM', 'Networking', 'Systems', 'Data', 'QA/Automation', 'Platform Eng', 'Endpoint/Collab'];
+  const itFrameworkOptions = [
+    'SRE', 'DORA', 'AWS Well-Architected', 'Azure Well-Architected', 'GCP Well-Architected',
+    'ISO 27001', 'SOC 2', 'NIST CSF', 'CIS Controls', 'CIS Benchmarks', 'Zero Trust', 'ITIL 4', 'ISO/IEC 20000'
+  ];
+  // Proficiency levels removed per request
+  // Curated platform categories with chip-only selection
+  const platformCategories = {
+    // Cloud and compute
+    'Cloud Platforms': ['AWS', 'Azure', 'GCP'],
+    'Serverless & Edge Compute': [
+      'AWS Lambda', 'Azure Functions', 'Cloud Run', 'Cloud Functions', 'Cloudflare Workers', 'Vercel'
+    ],
+    // Containers and orchestration
+    'Container & Orchestration': [
+      'Docker', 'Kubernetes', 'OpenShift', 'Helm', 'Argo CD', 'Kustomize'
+    ],
+    // Provisioning and configuration
+    'IaC & Config Management': [
+      'Terraform', 'Pulumi', 'CloudFormation', 'Ansible', 'Chef', 'Puppet', 'Packer'
+    ],
+    // Release and pipeline automation
+    'CI/CD & Release': [
+      'GitHub Actions', 'GitLab CI', 'Jenkins', 'CircleCI', 'Tekton', 'Spinnaker', 'Argo Rollouts'
+    ],
+    // Artifacts and registries
+    'Artifact & Registry': [
+      'GHCR', 'Docker Hub', 'ECR', 'Artifact Registry', 'GCR', 'Nexus', 'Artifactory'
+    ],
+    // Observability
+    'Observability (Metrics/Tracing)': [
+      'Prometheus', 'Grafana', 'OpenTelemetry', 'Jaeger', 'Datadog', 'New Relic'
+    ],
+    'Logging & SIEM': [
+      'Elastic/ELK', 'Splunk', 'Sumo Logic', 'Graylog', 'Microsoft Sentinel'
+    ],
+    // Incident mgmt
+    'Incident & On-call': ['PagerDuty', 'Opsgenie', 'Splunk On-Call'],
+    // Identity and secrets
+    'Identity & Access (IAM/SSO)': [
+      'Okta', 'Entra ID', 'Auth0', 'Keycloak', 'Ping Identity'
+    ],
+    'Secrets & KMS': [
+      'HashiCorp Vault', 'AWS Secrets Manager', 'AWS KMS', 'Azure Key Vault', 'GCP Secret Manager'
+    ],
+    // Endpoint & device
+    'Endpoint & Device Management': [
+      'Microsoft Intune', 'Jamf', 'Kandji', 'Workspace ONE'
+    ],
+    // Security categories
+    'Security – EDR/XDR': ['CrowdStrike', 'Microsoft Defender', 'SentinelOne'],
+    'Security – CSPM/CNAPP': ['Wiz', 'Prisma Cloud', 'Orca', 'Lacework'],
+    'Security – Vuln & Supply Chain': [
+      'Nessus', 'Qualys', 'Rapid7', 'Snyk', 'Trivy', 'Grype', 'Dependabot'
+    ],
+    'Security – SOAR': ['Cortex XSOAR', 'Splunk SOAR', 'Microsoft Sentinel SOAR'],
+    // Networking and delivery
+    'Networking & Edge/CDN': ['Cloudflare', 'CloudFront', 'Fastly', 'Akamai'],
+    'API Gateways & Service Mesh': [
+      'Kong', 'Tyk', 'Apigee', 'AWS API Gateway', 'Istio', 'Linkerd', 'App Mesh'
+    ],
+    // Data systems
+    'Databases – Relational': ['PostgreSQL', 'MySQL', 'SQL Server'],
+    'Databases – NoSQL/Cache/TS': [
+      'MongoDB', 'DynamoDB', 'Redis', 'Cassandra', 'Elasticsearch', 'InfluxDB', 'ClickHouse'
+    ],
+    'Data Platforms/Warehouse': ['Snowflake', 'BigQuery', 'Redshift', 'Databricks'],
+    // Messaging and streaming
+    'Messaging & Streaming': [
+      'Kafka', 'RabbitMQ', 'NATS', 'SQS', 'SNS', 'Pub/Sub', 'Kinesis'
+    ],
+    // Protocols and standards
+    'Protocols & Standards': [
+      'HTTP/HTTPS', 'TLS', 'SSH', 'DNS', 'OAuth 2.0', 'OIDC', 'SAML', 'LDAP', 'Kerberos',
+      'gRPC', 'MQTT', 'AMQP', 'WebSockets', 'OpenAPI', 'OPA/Rego'
+    ],
+  };
+  // Jurisdictions removed
 
-  const selectIndustry = (industry) => {
-    setProfile({ ...profile, industry });
+  const toggleArrayValue = (arr, value) => {
+    const set = new Set(arr || []);
+    if (set.has(value)) set.delete(value); else set.add(value);
+    return Array.from(set);
+  };
+
+  // Removed: per request we no longer capture or present framework proficiency levels
+
+  const toggleFramework = async (name) => {
+    const items = profile.it_profile.frameworks || [];
+    const idx = items.findIndex((f) => f.name === name);
+    if (idx >= 0) items.splice(idx, 1);
+    else items.push({ name, level: '' }); // keep level blank
+    const next = { ...profile, it_profile: { ...profile.it_profile, frameworks: [...items] } };
+    setProfile(next);
+    try {
+      if (profile?.id) {
+        const resp = await userProfileApi.update(profile.id, { it_profile: next.it_profile });
+        const server = resp?.data?.data || {};
+        let parsed = next.it_profile;
+        try {
+          const raw = server.it_profile;
+          parsed = typeof raw === 'string' ? JSON.parse(raw || '{}') : (raw || parsed);
+        } catch (_) {}
+        setProfile((prev) => ({ ...prev, it_profile: parsed }));
+        setOriginalProfile((prev) => (prev ? { ...prev, it_profile: parsed } : prev));
+      }
+    } catch (_) {}
+  };
+
+  const toggleSubdomain = async (name) => {
+    const subdomains = toggleArrayValue(profile.it_profile.subdomains, name);
+    const next = { ...profile, it_profile: { ...profile.it_profile, subdomains } };
+    setProfile(next);
+    try {
+      if (profile?.id) {
+        console.debug('[profile] SAVING subdomains:', subdomains, 'for user profile ID:', profile.id);
+        const resp = await userProfileApi.update(profile.id, { it_profile: next.it_profile });
+        console.debug('[profile] Server response:', resp?.data);
+        const server = resp?.data?.data || {};
+        let parsed = next.it_profile;
+        try {
+          const raw = server.it_profile;
+          parsed = typeof raw === 'string' ? JSON.parse(raw || '{}') : (raw || parsed);
+          console.debug('[profile] PARSED back from server:', parsed);
+        } catch (_) {}
+        setProfile((prev) => ({ ...prev, it_profile: parsed }));
+        setOriginalProfile((prev) => (prev ? { ...prev, it_profile: parsed } : prev));
+      }
+    } catch (e) {
+      console.error('[profile] Failed to save subdomain:', e);
+    }
+  };
+
+  // Jurisdictions removed
+
+  const togglePlatform = async (name) => {
+    const items = profile.it_profile.platforms || [];
+    const idx = items.findIndex((p) => p.name === name);
+    if (idx >= 0) items.splice(idx, 1);
+    else items.push({ name });
+    const next = { ...profile, it_profile: { ...profile.it_profile, platforms: [...items] } };
+    setProfile(next);
+    try {
+      if (profile?.id) {
+        const resp = await userProfileApi.update(profile.id, { it_profile: next.it_profile });
+        const server = resp?.data?.data || {};
+        let parsed = next.it_profile;
+        try {
+          const raw = server.it_profile;
+          parsed = typeof raw === 'string' ? JSON.parse(raw || '{}') : (raw || parsed);
+        } catch (_) {}
+        setProfile((prev) => ({ ...prev, it_profile: parsed }));
+        setOriginalProfile((prev) => (prev ? { ...prev, it_profile: parsed } : prev));
+      }
+    } catch (_) {}
   };
 
 
 
+  // Industry is fixed to Technology (no selector)
 
+
+
+
+
+  // --- Debounced save for manual text input only ---
+  React.useEffect(() => {
+    if (!profile?.id || !profile.current_role) return;
+    const timer = setTimeout(async () => {
+      try {
+        console.debug('[profile] DEBOUNCED SAVE manual role:', profile.current_role, 'with it_profile to preserve selections');
+        await userProfileApi.update(profile.id, { 
+          current_role: profile.current_role,
+          it_profile: profile.it_profile // CRITICAL: preserve IT profile during role saves
+        });
+      } catch (e) {
+        console.error('[profile] Failed to save manual role:', e);
+      }
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [profile.id, profile.current_role]);
 
   if (loading) {
     return (
@@ -293,40 +507,15 @@ export default function Profile({ sidebarOpen = false }) {
       <div className="absolute inset-0 opacity-10 pointer-events-none">
         <div className="absolute inset-0 bg-gradient-to-br from-amber-100/20 via-transparent to-orange-100/20"></div>
       </div>
-      
+      {/* Page title aligned with left gutter like Dashboard */}
+      <div className="w-full px-6 pt-8 relative z-10 hidden md:block">
+        <PageTitle className="text-2xl font-semibold text-gray-900 dark:text-zinc-100 tracking-tight">
+          Profile
+        </PageTitle>
+      </div>
+
       {/* Content container that works with LayoutShell padding */}
       <div className="w-full max-w-4xl mx-auto px-6 py-8 relative z-10">
-        {/* Enhanced Header Section */}
-        <div className="text-center mb-16">
-          <motion.div 
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-            className="relative inline-flex items-center justify-center w-28 h-28 mb-8"
-          >
-            {/* Clean, modern icon background */}
-            <div className="w-28 h-28 bg-accent-100 dark:bg-accent-900/30 rounded-3xl flex items-center justify-center shadow-sm ring-1 ring-accent-200/50 dark:ring-accent-700/30 transform hover:scale-105 transition-all duration-300">
-              <div className="w-20 h-20 bg-accent-50 dark:bg-accent-800/20 rounded-2xl flex items-center justify-center">
-                <svg className="w-10 h-10 text-accent-600 dark:text-accent-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-              </div>
-            </div>
-          </motion.div>
-          
-          <PageTitle className="text-5xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-zinc-100 dark:to-zinc-300 bg-clip-text text-transparent mb-4">
-            Complete Your Profile
-          </PageTitle>
-          
-          <motion.p 
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
-            className="text-xl text-gray-600 dark:text-zinc-400 max-w-2xl mx-auto leading-relaxed"
-          >
-            Help us personalize your career journey and create meaningful goals tailored just for you
-          </motion.p>
-        </div>
 
         {/* Enhanced Progress Indicator */}
         <motion.div 
@@ -353,7 +542,7 @@ export default function Profile({ sidebarOpen = false }) {
                 </button>
               </div>
               <span className="text-lg font-bold text-accent-600 dark:text-accent-400">
-                {[profile.current_role, profile.experience_level, profile.industry].filter(Boolean).length}/3
+                {progressSegments.filter((s) => s.done).length}/{progressSegments.length}
               </span>
             </div>
             <div className="w-full bg-gray-200 dark:bg-zinc-700 rounded-full h-3 overflow-hidden">
@@ -361,13 +550,13 @@ export default function Profile({ sidebarOpen = false }) {
                 className="bg-gradient-to-r from-accent-500 to-accent-600 h-3 rounded-full shadow-lg"
                 initial={{ width: 0 }}
                 animate={{ 
-                  width: `${(isProfileComplete() ? 100 : ([profile.current_role, profile.experience_level, profile.industry].filter(Boolean).length / 3) * 100)}%` 
+                  width: `${(progressSegments.filter((s) => s.done).length / progressSegments.length) * 100}%` 
                 }}
                 transition={{ duration: 1, delay: 0.5, ease: "easeOut" }}
               />
             </div>
             <div className="mt-3 text-sm text-gray-600 dark:text-zinc-400">
-              {isProfileComplete() ? "🎉 Profile complete! You're all set." : "Just a few more details to personalize your experience"}
+              {isProfileComplete() ? "🎉 Profile complete! You're all set." : "Add a role, experience, and some tools/frameworks to personalize suggestions."}
             </div>
             </div>
           </div>
@@ -405,13 +594,26 @@ export default function Profile({ sidebarOpen = false }) {
           className="bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl rounded-3xl shadow-2xl ring-1 ring-amber-200/50 dark:ring-amber-700/30 overflow-hidden relative"
         >
           {/* Animated border effect */}
-          <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-amber-400/20 via-transparent to-orange-400/20 dark:from-amber-500/20 dark:via-transparent dark:to-orange-500/20 opacity-0 hover:opacity-100 transition-opacity duration-500"></div>
+          <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-amber-400/20 via-transparent to-orange-400/20 dark:from-amber-500/20 dark:via-transparent dark:to-orange-500/20 opacity-0 hover:opacity-100 transition-opacity duration-500 pointer-events-none z-0"></div>
           
           {/* Floating accent elements */}
-          <div className="absolute top-4 right-4 w-16 h-16 bg-gradient-to-br from-amber-400/20 to-orange-500/20 dark:from-amber-500/20 dark:to-orange-600/20 rounded-full blur-xl"></div>
-          <div className="absolute bottom-4 left-4 w-12 h-12 bg-gradient-to-br from-amber-300/20 to-orange-400/20 dark:from-amber-600/20 dark:to-orange-500/20 rounded-full blur-lg"></div>
+          <div className="absolute top-4 right-4 w-16 h-16 bg-gradient-to-br from-amber-400/20 to-orange-500/20 dark:from-amber-500/20 dark:to-orange-600/20 rounded-full blur-xl pointer-events-none z-0"></div>
+          <div className="absolute bottom-4 left-4 w-12 h-12 bg-gradient-to-br from-amber-300/20 to-orange-400/20 dark:from-amber-600/20 dark:to-orange-500/20 rounded-full blur-lg pointer-events-none z-0"></div>
           
-          <form onSubmit={onSave} className="p-8 space-y-10 relative z-10">
+          <form className="p-8 space-y-10 relative z-10">
+            {/* Industry fixed to Technology - no selector */}
+            <div className="bg-white/95 dark:bg-zinc-900/95 rounded-2xl border-2 border-gray-200 dark:border-zinc-800 p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <svg className="w-6 h-6 text-accent-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7h18M3 12h18M3 17h18" />
+                  </svg>
+                  <span className="text-xl font-semibold text-gray-900 dark:text-zinc-100">Industry</span>
+                </div>
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-accent-100 dark:bg-accent-900/30 text-accent-800 dark:text-accent-200 border border-accent-200 dark:border-accent-700">Technology</span>
+              </div>
+            </div>
+
             {/* Current Role - Enhanced */}
             <div className="space-y-4">
               <label className="block">
@@ -424,32 +626,11 @@ export default function Profile({ sidebarOpen = false }) {
                 </span>
               </label>
 
-              {/* Show current industry with Change link */}
-              <div className="ml-9 mt-1 flex items-center gap-2">
-                {profile.industry ? (
-                  <>
-                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-zinc-800 dark:text-zinc-200 ring-1 ring-black/5">
-                      {profile.industry}
-                    </span>
-                    <a href="#/account" className="text-sm text-accent-600 hover:text-accent-700 dark:text-accent-400 dark:hover:text-accent-300 underline">
-                      Change
-                    </a>
-                  </>
-                ) : null}
-              </div>
-
-              {/* Role selection based on industry */}
-              {!profile.industry ? (
-                <div className="p-6 border-2 border-dashed border-gray-300 dark:border-zinc-600 rounded-2xl bg-gray-50 dark:bg-zinc-800/50 text-center">
-                  <p className="text-gray-600 dark:text-zinc-400 mb-3">
-                    Set your industry in Account Settings to see relevant roles
-                  </p>
-                  <a href="#/account" className="btn-secondary inline-block">Go to Account Settings</a>
-                </div>
-              ) : industryJobRolesLoading ? (
+              {/* Role selection - tech industry */}
+              {industryJobRolesLoading ? (
                 <div className="p-6 border-2 border-gray-200 dark:border-zinc-700 rounded-2xl bg-white dark:bg-zinc-900 text-center">
                   <div className="animate-spin w-6 h-6 border-2 border-accent-500 border-t-transparent rounded-full mx-auto mb-3"></div>
-                  <p className="text-gray-600 dark:text-zinc-400">Loading roles for {profile.industry}...</p>
+                  <p className="text-gray-600 dark:text-zinc-400">Loading roles for Technology...</p>
                 </div>
               ) : industryJobRoles.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -460,7 +641,21 @@ export default function Profile({ sidebarOpen = false }) {
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.4, delay: 0.5 + index * 0.1 }}
-                      onClick={() => setProfile({ ...profile, current_role: role.title })}
+                      onClick={async () => {
+                        const next = { ...profile, current_role: role.title };
+                        setProfile(next);
+                        try {
+                          if (profile?.id) {
+                            console.debug('[profile] SAVING role:', role.title, 'with it_profile to preserve selections');
+                            await userProfileApi.update(profile.id, { 
+                              current_role: role.title,
+                              it_profile: profile.it_profile // CRITICAL: preserve IT profile during role saves
+                            });
+                          }
+                        } catch (e) {
+                          console.error('[profile] Failed to save role:', e);
+                        }
+                      }}
                       className={`group relative p-4 rounded-xl border-2 transition-all duration-300 text-left hover:scale-105 hover:shadow-lg ${
                         profile.current_role === role.title
                           ? 'border-accent-500 bg-gradient-to-br from-accent-50 to-accent-100 dark:from-accent-900/30 dark:to-accent-800/20 ring-2 ring-accent-200 dark:ring-accent-700/50 shadow-lg'
@@ -506,12 +701,7 @@ export default function Profile({ sidebarOpen = false }) {
                 </div>
               )}
 
-              <p className="text-sm text-gray-600 dark:text-zinc-400 ml-9">
-                {profile.industry 
-                  ? `Showing roles relevant to ${profile.industry}` 
-                  : 'Industry is managed in Account Settings'
-                }
-              </p>
+              <p className="text-sm text-gray-600 dark:text-zinc-400 ml-9">Showing roles relevant to Technology</p>
             </div>
 
             {/* Experience Level - Enhanced */}
@@ -533,7 +723,21 @@ export default function Profile({ sidebarOpen = false }) {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4, delay: 0.5 + index * 0.1 }}
-                    onClick={() => setProfile({ ...profile, experience_level: option.value })}
+                    onClick={async () => {
+                      const next = { ...profile, experience_level: option.value };
+                      setProfile(next);
+                                              try {
+                          if (profile?.id) {
+                            console.debug('[profile] SAVING experience_level:', option.value, 'with it_profile to preserve selections');
+                            await userProfileApi.update(profile.id, { 
+                              experience_level: option.value,
+                              it_profile: profile.it_profile // CRITICAL: preserve IT profile during experience saves
+                            });
+                          }
+                        } catch (e) {
+                          console.error('[profile] Failed to save experience_level:', e);
+                        }
+                    }}
                     className={`group p-6 rounded-2xl border-2 transition-all duration-300 text-left hover:scale-105 hover:shadow-lg ${
                       profile.experience_level === option.value
                         ? 'border-accent-500 bg-gradient-to-br from-accent-50 to-accent-100 dark:from-accent-900/30 dark:to-accent-800/20 ring-4 ring-accent-200 dark:ring-accent-700/50 shadow-lg'
@@ -611,7 +815,67 @@ export default function Profile({ sidebarOpen = false }) {
               )}
             </div>
 
-            {/* Enhanced Submit Button */}
+            {/* IT Profile (optional) */}
+            <div className="space-y-6 pt-6 border-t border-gray-200 dark:border-zinc-800">
+              <SectionTitle className="text-lg font-semibold text-gray-900 dark:text-zinc-100">IT Profile (optional)</SectionTitle>
+
+              {/* Subdomains */}
+              <div>
+                <div className="text-sm font-medium text-gray-700 dark:text-zinc-300 mb-2">Subdomains</div>
+                <div className="flex flex-wrap gap-2">
+                  {itSubdomainOptions.map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => toggleSubdomain(s)}
+                      className={`px-3 py-1.5 rounded-full text-sm border ${profile.it_profile.subdomains?.includes(s) ? 'bg-accent-100 dark:bg-accent-900/30 border-accent-300 dark:border-accent-700 text-accent-800 dark:text-accent-200' : 'bg-white dark:bg-zinc-900 border-gray-300 dark:border-zinc-700 text-gray-700 dark:text-zinc-300'}`}
+                    >{s}</button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Frameworks */}
+              <div>
+                <div className="text-sm font-medium text-gray-700 dark:text-zinc-300 mb-2">Frameworks & Standards</div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {itFrameworkOptions.map((f) => {
+                    const selected = (profile.it_profile.frameworks || []).find((x) => x.name === f);
+                    return (
+                      <div key={f} className={`flex items-center justify-between p-3 rounded-xl border ${selected ? 'border-accent-300 dark:border-accent-700 bg-accent-50/40 dark:bg-accent-900/20' : 'border-gray-200 dark:border-zinc-700'}`}>
+                        <button type="button" role="button" aria-pressed={!!selected} onClick={() => toggleFramework(f)} className="text-left font-medium text-gray-800 dark:text-zinc-100">{f}</button>
+                        {/* Level selection removed */}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Platforms - organized by categories, chip-only selection */}
+              <div>
+                <div className="text-sm font-medium text-gray-700 dark:text-zinc-300 mb-2">Platforms & Tools</div>
+                <div className="space-y-4">
+                  {Object.entries(platformCategories).map(([category, items]) => (
+                    <div key={category}>
+                      <div className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400 mb-2">{category}</div>
+                      <div className="flex flex-wrap gap-2">
+                        {items.map((pName) => (
+                          <button
+                            key={pName}
+                            type="button"
+                            onClick={() => togglePlatform(pName)}
+                            className={`px-3 py-1.5 rounded-full text-sm border ${profile.it_profile.platforms?.find((p)=>p.name===pName) ? 'bg-accent-100 dark:bg-accent-900/30 border-accent-300 dark:border-accent-700 text-accent-800 dark:text-accent-200' : 'bg-white dark:bg-zinc-900 border-gray-300 dark:border-zinc-700 text-gray-700 dark:text-zinc-300'}`}
+                          >{pName}</button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Jurisdictions removed per request */}
+            </div>
+
+            {/* Done Button (navigation only) */}
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -622,27 +886,11 @@ export default function Profile({ sidebarOpen = false }) {
               <div className="absolute inset-0 bg-gradient-to-r from-amber-400/20 to-orange-500/20 dark:from-amber-500/20 dark:to-orange-600/20 rounded-2xl blur-xl transform scale-105"></div>
               
               <button
-                type="submit"
-                disabled={!isProfileComplete() || !profile.policies_accepted || buttonState === 'saving'}
-                                 className={`relative w-full py-4 px-8 rounded-2xl font-semibold text-lg transition-all duration-300 transform hover:scale-105 focus:ring-4 focus:ring-offset-0 ${
-                   buttonState === 'saving'
-                     ? 'bg-gray-400 dark:bg-zinc-600 text-white cursor-not-allowed'
-                     : isProfileComplete() && profile.policies_accepted
-                     ? 'bg-gradient-to-r from-amber-600 to-orange-700 hover:from-amber-700 hover:to-orange-800 text-white shadow-lg hover:shadow-xl focus:ring-amber-500/30'
-                     : 'bg-gray-300 dark:bg-zinc-700 text-gray-500 dark:text-zinc-400 cursor-not-allowed'
-                 }`}
+                type="button"
+                onClick={() => { window.location.hash = '#/'; }}
+                className={`relative w-full py-4 px-8 rounded-2xl font-semibold text-lg transition-all duration-300 transform hover:scale-105 focus:ring-4 focus:ring-offset-0 bg-gradient-to-r from-amber-600 to-orange-700 hover:from-amber-700 hover:to-orange-800 text-white shadow-lg hover:shadow-xl focus:ring-amber-500/30`}
               >
-                {buttonState === 'saving' ? (
-                  <div className="flex items-center justify-center">
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Saving...
-                  </div>
-                ) : (
-                  getButtonText()
-                )}
+                Done
               </button>
             </motion.div>
           </form>

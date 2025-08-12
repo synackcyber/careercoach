@@ -3,6 +3,8 @@ package middleware
 import (
 	"net"
 	"net/http"
+	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -80,13 +82,69 @@ func RateLimitMiddleware(capacity, refillRate int) gin.HandlerFunc {
 }
 
 func clientIP(r *http.Request) string {
-	// Respect X-Forwarded-For if present
-	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
-		return xff
-	}
-	ip, _, err := net.SplitHostPort(r.RemoteAddr)
+	// Get trusted proxy list from environment (comma-separated)
+	trustedProxies := getTrustedProxies()
+	
+	// Get the direct connection IP
+	directIP, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
-		return r.RemoteAddr
+		directIP = r.RemoteAddr
 	}
-	return ip
+	
+	// Only trust X-Forwarded-For if the request comes from a trusted proxy
+	if isTrustedProxy(directIP, trustedProxies) {
+		if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
+			// Take the first IP from X-Forwarded-For (the original client)
+			ips := strings.Split(xff, ",")
+			if len(ips) > 0 {
+				clientIP := strings.TrimSpace(ips[0])
+				if isValidIP(clientIP) {
+					return clientIP
+				}
+			}
+		}
+	}
+	
+	return directIP
+}
+
+func getTrustedProxies() []string {
+	// Default trusted proxies for common load balancers/proxies
+	defaultProxies := []string{
+		"127.0.0.1", "::1", // localhost
+		"10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", // private networks
+	}
+	
+	// Allow override via environment variable
+	if envProxies := os.Getenv("TRUSTED_PROXIES"); envProxies != "" {
+		return strings.Split(envProxies, ",")
+	}
+	
+	return defaultProxies
+}
+
+func isTrustedProxy(ip string, trustedProxies []string) bool {
+	for _, trusted := range trustedProxies {
+		trusted = strings.TrimSpace(trusted)
+		if strings.Contains(trusted, "/") {
+			// CIDR notation
+			_, network, err := net.ParseCIDR(trusted)
+			if err != nil {
+				continue
+			}
+			if testIP := net.ParseIP(ip); testIP != nil && network.Contains(testIP) {
+				return true
+			}
+		} else {
+			// Direct IP comparison
+			if ip == trusted {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func isValidIP(ip string) bool {
+	return net.ParseIP(ip) != nil
 }

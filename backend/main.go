@@ -32,9 +32,15 @@ func main() {
 
 	// Light rate limiting across all routes (e.g., 120 req/min ~= 2 rps with burst 60)
 	r.Use(middleware.RateLimitMiddleware(60, 2))
+	
+	// Request size limiting for security
+	r.Use(middleware.RequestSizeLimiter(middleware.MaxRequestSize))
 
     api := r.Group("/api/v1")
     {
+        // Security endpoints
+        api.GET("/csrf-token", middleware.CSRFTokenEndpoint())
+        
         // Public groups
         jobRoles := api.Group("/job-roles")
         {
@@ -53,6 +59,8 @@ func main() {
         {
             suggestions.GET("", handlers.GetGoalSuggestions)
             suggestions.GET("/:id", handlers.GetGoalSuggestion)
+            // Profile-based
+            suggestions.GET("/for-profile", handlers.GetProfileBasedSuggestions)
         }
 
         progressSuggestions := api.Group("/progress-suggestions")
@@ -62,9 +70,10 @@ func main() {
             progressSuggestions.GET("/:id", handlers.GetProgressSuggestion)
         }
 
-        // Protected groups
+        // Protected groups with authentication and CSRF protection
         authRequired := api.Group("")
         authRequired.Use(middleware.RequireAuth())
+        authRequired.Use(middleware.CSRFProtection())
 
         goals := authRequired.Group("/goals")
         {
@@ -88,6 +97,12 @@ func main() {
         aiGoals := authRequired.Group("/ai")
         {
             aiGoals.POST("/goal-suggestions", handlers.GetAIGoalSuggestions)
+            // SMART-only endpoint (preferred)
+            aiGoals.POST("/refine-smart", handlers.RefineSMARTRoute)
+            // Legacy OKR+SMART (kept for compatibility if called)
+            aiGoals.POST("/refine-okr", handlers.RefineOKRSmart)
+            // Milestones
+            aiGoals.POST("/milestones", handlers.GenerateMilestonesRoute)
         }
 
         userProfiles := authRequired.Group("/profiles")

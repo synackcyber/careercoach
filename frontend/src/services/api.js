@@ -31,7 +31,24 @@ const api = axios.create({
   },
 });
 
-// Attach Authorization header if user is logged in
+// CSRF token management
+let csrfToken = null;
+
+// Get CSRF token from server
+const getCSRFToken = async () => {
+  if (csrfToken) return csrfToken;
+  
+  try {
+    const response = await axios.get(`${API_BASE_URL}/csrf-token`);
+    csrfToken = response.data.csrf_token;
+    return csrfToken;
+  } catch (error) {
+    console.warn('[api] failed to get CSRF token', error);
+    return null;
+  }
+};
+
+// Attach Authorization header and CSRF token if user is logged in
 api.interceptors.request.use(async (config) => {
   try {
     // Prefer cached token; fallback to quick lookup
@@ -46,6 +63,14 @@ api.interceptors.request.use(async (config) => {
     if (token) {
       config.headers = config.headers || {};
       config.headers.Authorization = `Bearer ${token}`;
+      
+      // Add CSRF token for state-changing operations
+      if (config.method && config.method.toLowerCase() !== 'get' && config.method.toLowerCase() !== 'head') {
+        const csrf = await getCSRFToken();
+        if (csrf) {
+          config.headers['X-CSRF-Token'] = csrf;
+        }
+      }
     }
   } catch (e) {
     try { console.warn('[api] failed to get token', e); } catch (_) {}
@@ -54,16 +79,26 @@ api.interceptors.request.use(async (config) => {
   return config;
 });
 
-// Log responses to help diagnose loading states
+// Log responses and handle CSRF token refresh
 api.interceptors.response.use(
   (response) => {
     try { console.debug('[api] response', response.status, response.config.method?.toUpperCase(), response.config.baseURL + (response.config.url || '')); } catch (_) {}
     return response;
   },
-  (error) => {
+  async (error) => {
     try {
       const { response, config } = error || {};
       console.error('[api] error', response?.status, config?.method?.toUpperCase(), (config?.baseURL || '') + (config?.url || ''), response?.data || error?.message);
+      
+      // Handle CSRF token expiration
+      if (response?.status === 403 && response?.data?.error?.includes('CSRF')) {
+        // Clear cached CSRF token and retry once
+        csrfToken = null;
+        if (!config._retried) {
+          config._retried = true;
+          return api(config);
+        }
+      }
     } catch (_) {}
     return Promise.reject(error);
   }
@@ -85,9 +120,21 @@ export const responsibilityApi = {
 export const goalApi = {
   getAll: (params = {}) => api.get('/goals', { params }),
   getById: (id) => api.get(`/goals/${id}`),
-  create: (data) => api.post('/goals', data),
-  update: (id, data) => api.put(`/goals/${id}`, data),
-  delete: (id) => api.delete(`/goals/${id}`),
+  create: (data) =>
+    api.post('/goals', data).then((response) => {
+      try { window.dispatchEvent(new Event('goals:changed')); } catch (_) {}
+      return response;
+    }),
+  update: (id, data) =>
+    api.put(`/goals/${id}`, data).then((response) => {
+      try { window.dispatchEvent(new Event('goals:changed')); } catch (_) {}
+      return response;
+    }),
+  delete: (id) =>
+    api.delete(`/goals/${id}`).then((response) => {
+      try { window.dispatchEvent(new Event('goals:changed')); } catch (_) {}
+      return response;
+    }),
 };
 
 export const progressApi = {
@@ -115,6 +162,8 @@ export const userProfileApi = {
 
 export const aiApi = {
   generateGoalSuggestions: (data) => api.post('/ai/goal-suggestions', data),
+  refineSMART: (data) => api.post('/ai/refine-smart', data),
+  milestones: (data) => api.post('/ai/milestones', data),
 };
 
 export default api;

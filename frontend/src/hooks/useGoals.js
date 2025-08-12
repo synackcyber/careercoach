@@ -4,9 +4,10 @@ import { getAccessToken, onAuthStateChange } from '../supabase/authClient';
 
 export const useGoals = (filters = {}) => {
   const [goals, setGoals] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isFetching, setIsFetching] = useState(false); // Prevent duplicate requests
+  const [initialized, setInitialized] = useState(false); // First-load guard to prevent empty-state flash
 
   const fetchGoals = async () => {
     // Prevent duplicate requests
@@ -40,6 +41,8 @@ export const useGoals = (filters = {}) => {
       setLoading(false);
       setIsFetching(false);
       try { console.debug('[goals] loading = false'); } catch (_) {}
+      // Mark first load attempt as complete (success or fail)
+      setInitialized(true);
     }
   };
 
@@ -102,6 +105,7 @@ export const useGoals = (filters = {}) => {
       } else {
         setLoading(false);
       }
+      // Do not mark initialized here. We wait until the first fetch attempt completes
     };
     checkAuthAndFetch();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -119,10 +123,23 @@ export const useGoals = (filters = {}) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Refetch when any component dispatches a global goals change event
+  useEffect(() => {
+    const handler = () => {
+      debouncedFetch();
+    };
+    try { window.addEventListener('goals:changed', handler); } catch (_) {}
+    return () => {
+      try { window.removeEventListener('goals:changed', handler); } catch (_) {}
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return {
     goals,
     loading,
     error,
+    initialized,
     refetch: fetchGoals,
     createGoal,
     updateGoal,

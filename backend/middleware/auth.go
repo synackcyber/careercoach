@@ -3,7 +3,10 @@ package middleware
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
+	"sync"
+	"time"
 
     "goaltracker/config"
 
@@ -13,6 +16,21 @@ import (
 
 // UserIDKey is the key used to store the user ID in the Gin context
 const UserIDKey = "userID"
+
+// Admin cache with TTL
+var (
+	adminCache struct {
+		mu        sync.RWMutex
+		adminIDs  map[string]struct{}
+		lastLoad  time.Time
+		cacheTTL  time.Duration
+	}
+)
+
+func init() {
+	adminCache.adminIDs = make(map[string]struct{})
+	adminCache.cacheTTL = 5 * time.Minute // Cache for 5 minutes
+}
 
 // RequireAuth is a Gin middleware to authenticate requests using JWT
 func RequireAuth() gin.HandlerFunc {
@@ -64,27 +82,55 @@ func RequireAuth() gin.HandlerFunc {
 	}
 }
 
-// RequireAdmin checks if authenticated user is in the ADMIN_USER_IDS allowlist
-// RequireAdmin checks if authenticated user is in the ADMIN_USER_IDS allowlist
-func RequireAdmin() gin.HandlerFunc {
-    cfg := config.Load()
-    allow := map[string]struct{}{}
-    if cfg.AdminUserIDs != "" {
-        for _, id := range strings.Split(cfg.AdminUserIDs, ",") {
+// loadAdminIDs loads and caches admin user IDs with TTL
+func loadAdminIDs() map[string]struct{} {
+    adminCache.mu.RLock()
+    if time.Since(adminCache.lastLoad) < adminCache.cacheTTL {
+        defer adminCache.mu.RUnlock()
+        return adminCache.adminIDs
+    }
+    adminCache.mu.RUnlock()
+
+    // Cache expired, reload
+    adminCache.mu.Lock()
+    defer adminCache.mu.Unlock()
+
+    // Double-check in case another goroutine loaded while we waited
+    if time.Since(adminCache.lastLoad) < adminCache.cacheTTL {
+        return adminCache.adminIDs
+    }
+
+    // Load admin IDs from environment
+    newAdminIDs := make(map[string]struct{})
+    if adminUserIDs := os.Getenv("ADMIN_USER_IDS"); adminUserIDs != "" {
+        for _, id := range strings.Split(adminUserIDs, ",") {
             id = strings.TrimSpace(id)
-            if id != "" { allow[id] = struct{}{} }
+            if id != "" {
+                newAdminIDs[id] = struct{}{}
+            }
         }
     }
+
+    adminCache.adminIDs = newAdminIDs
+    adminCache.lastLoad = time.Now()
+    return adminCache.adminIDs
+}
+
+// RequireAdmin checks if authenticated user is in the ADMIN_USER_IDS allowlist
+func RequireAdmin() gin.HandlerFunc {
     return func(c *gin.Context) {
         uid, err := GetUserID(c)
         if err != nil {
             c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "admin only"})
             return
         }
-        if _, ok := allow[uid]; !ok {
+        
+        adminIDs := loadAdminIDs()
+        if _, ok := adminIDs[uid]; !ok {
             c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "admin only"})
             return
         }
+        
         c.Next()
     }
 }

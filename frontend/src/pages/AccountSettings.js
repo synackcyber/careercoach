@@ -20,21 +20,8 @@ export default function AccountSettings() {
   const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
   const [profile, setProfile] = useState(null);
-  const [industry, setIndustry] = useState('');
 
-  // Top 10 most relevant industries
-  const topIndustries = [
-    'Technology',
-    'Healthcare', 
-    'Finance',
-    'Education',
-    'Manufacturing',
-    'Consulting',
-    'Media & Entertainment',
-    'Government',
-    'Retail',
-    'Energy'
-  ];
+  // Industry selection moved to Profile page
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -58,7 +45,6 @@ export default function AccountSettings() {
             if (profile) {
               console.log('[account] Loaded profile:', profile);
               setProfile(profile);
-              setIndustry(profile.industry || '');
               if (profile.terms_accepted_at) {
                 setAcceptedTerms(true);
                 localStorage.setItem('acceptedTerms', 'true');
@@ -144,26 +130,7 @@ export default function AccountSettings() {
     }
   };
 
-  const handleIndustryChange = async (newIndustry) => {
-    if (!profile || newIndustry === industry) return;
-
-    setSaving(true);
-    setError('');
-    setSuccess('');
-
-    try {
-      await userProfileApi.update(profile.id, {
-        industry: newIndustry
-      });
-      
-      setIndustry(newIndustry);
-      setSuccess('Industry updated successfully!');
-    } catch (err) {
-      setError('Failed to update industry. Please try again.');
-    } finally {
-      setSaving(false);
-    }
-  };
+  // Industry editing removed
 
   const handleTermsAcceptance = async (accepted) => {
     setAcceptedTerms(accepted);
@@ -357,33 +324,7 @@ export default function AccountSettings() {
               </form>
             )}
 
-            {/* Industry Selection */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-2">Industry</label>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-900 dark:text-zinc-100">
-                  {industry || 'Not set'}
-                </span>
-                <div className="flex items-center space-x-2">
-                  {saving && (
-                    <div className="animate-spin w-4 h-4 border-2 border-accent-500 border-t-transparent rounded-full"></div>
-                  )}
-                  <select
-                    value={industry}
-                    onChange={(e) => handleIndustryChange(e.target.value)}
-                    disabled={saving}
-                    className="px-4 py-2 border border-gray-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100 focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-all duration-200 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <option value="">Select an industry</option>
-                    {topIndustries.map((ind) => (
-                      <option key={ind} value={ind}>
-                        {ind}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </div>
+            {/* Industry selection moved to Profile page */}
 
             {/* Email Address */}
             <div>
