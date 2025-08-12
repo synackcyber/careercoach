@@ -42,13 +42,34 @@ export default function Admin() {
           <div className="text-xl">{health ? new Date(health.time).toLocaleString() : '—'}</div>
         </div>
         <div className="rounded-xl ring-1 ring-black/5 bg-white/85 dark:bg-zinc-900/70 backdrop-blur p-4">
-          <div className="text-sm text-zinc-500">AI Provider</div>
-          <div className="text-xl">{aiStatus ? aiStatus.provider : '—'}</div>
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-sm text-zinc-500">AI Provider</div>
+              <div className="text-xl">{aiStatus ? aiStatus.provider : '—'}</div>
+            </div>
+            {aiStatus && (
+              <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+                aiStatus.health?.status === 'up' || aiStatus.health?.status === 'up-local' ? 'bg-green-100 text-green-700' :
+                aiStatus.health?.status === 'degraded' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'
+              }`}>
+                {aiStatus.health?.status || '—'}
+              </div>
+            )}
+          </div>
           {aiStatus && (
             <div className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">
-              <div>24h calls: {aiStatus.total_calls}</div>
+              <div>Calls (window): {aiStatus.total_calls}</div>
               <div>Success: {aiStatus.success_calls}</div>
               <div>Avg latency: {aiStatus.avg_latency_ms} ms</div>
+              {aiStatus.health?.last_success && (
+                <div>Last success: {new Date(aiStatus.health.last_success).toLocaleString()}</div>
+              )}
+              {typeof aiStatus.health?.fallback_rate === 'number' && (
+                <div>Fallback rate: {(aiStatus.health.fallback_rate * 100).toFixed(0)}%</div>
+              )}
+              {aiStatus.health?.reason && (
+                <div className="text-xs text-zinc-500 mt-1">{aiStatus.health.reason}</div>
+              )}
             </div>
           )}
         </div>

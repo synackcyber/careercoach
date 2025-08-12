@@ -46,6 +46,8 @@ func AdminAIStatus(c *gin.Context) {
         since = &t
     }
 
+    health, lastSuccess, fallbackRate, reason := services.ComputeAIHealth()
+
     c.JSON(http.StatusOK, gin.H{
         "data": gin.H{
             "provider": services.CurrentAIProvider(),
@@ -54,6 +56,12 @@ func AdminAIStatus(c *gin.Context) {
             "avg_latency_ms": avgLatency,
             "window": "last_100",
             "sample_since": since,
+            "health": gin.H{
+                "status": health,
+                "last_success": lastSuccess,
+                "fallback_rate": fallbackRate,
+                "reason": reason,
+            },
         },
     })
 }

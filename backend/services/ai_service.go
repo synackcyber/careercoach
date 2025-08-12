@@ -67,6 +67,41 @@ type AIStatsWindow struct { Items []AIStat }
 func GetAIStats() AIStatsWindow { return AIStatsWindow{Items: aiStats.Items} }
 func CurrentAIProvider() string { return getEnvOrDefault("AI_SUGGESTIONS_PROVIDER", "local") }
 
+// ComputeAIHealth inspects recent stats and env to produce a simple health signal.
+// up: provider=openai, key present, success in last 15m
+// degraded: provider=openai, key present, but only fallbacks recently (or no recent calls)
+// down: provider=openai, key missing
+// local: provider=local (treated as up-local)
+func ComputeAIHealth() (status string, lastSuccess *time.Time, fallbackRate float64, reason string) {
+    provider := CurrentAIProvider()
+    if provider != "openai" {
+        return "up-local", nil, 0, "using local generator"
+    }
+    if os.Getenv("OPENAI_API_KEY") == "" {
+        return "down", nil, 1, "missing OPENAI_API_KEY"
+    }
+    // analyze last 100 stats
+    items := aiStats.Items
+    var successes, total int
+    var last *time.Time
+    cutoff := time.Now().Add(-15 * time.Minute)
+    for _, s := range items {
+        total++
+        if s.Success {
+            if last == nil || s.Timestamp.After(*last) { t := s.Timestamp; last = &t }
+        }
+    }
+    // compute fallback rate as 1 - success rate
+    for _, s := range items { if s.Success { successes++ } }
+    if total > 0 {
+        fallbackRate = 1 - float64(successes)/float64(total)
+    }
+    if last != nil && last.After(cutoff) {
+        return "up", last, fallbackRate, "recent success"
+    }
+    return "degraded", last, fallbackRate, "no recent success (last 15m)"
+}
+
 func NewAIService() *AIService {
     // Lightweight env read to avoid tight coupling to config pkg
     provider := getEnvOrDefault("AI_SUGGESTIONS_PROVIDER", "local")
