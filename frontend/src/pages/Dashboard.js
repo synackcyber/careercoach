@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { MagnifyingGlassIcon, FlagIcon } from '@heroicons/react/24/outline';
-import { motion } from 'framer-motion';
+import { MagnifyingGlassIcon, FlagIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { motion, AnimatePresence } from 'framer-motion';
 
 import { useGoals } from '../hooks/useGoals';
 
 import GoalCard from '../components/GoalCard';
 import SimpleGoalForm from '../components/SimpleGoalForm';
 import ProgressModal from '../components/ProgressModal';
-// AI Settings removed
+import RoadmapModal from '../components/RoadmapModal';
+
 
 const Dashboard = ({ session }) => {
   const [filters] = useState({});
@@ -17,9 +18,36 @@ const Dashboard = ({ session }) => {
   const [editingGoal, setEditingGoal] = useState(null);
   const [selectedGoal, setSelectedGoal] = useState(null);
   const [showProgressModal, setShowProgressModal] = useState(false);
+  const [showRoadmapModal, setShowRoadmapModal] = useState(false);
+  const [selectedGoalForRoadmap, setSelectedGoalForRoadmap] = useState(null);
+  const [currentGreetingIndex, setCurrentGreetingIndex] = useState(0);
   // const [showAISettings, setShowAISettings] = useState(false);
 
   const { goals, loading, error, initialized, createGoal, updateGoal, deleteGoal } = useGoals(filters);
+  
+  // Rotating greetings array
+  const greetings = [
+    "Welcome back",
+    "Good to see you",
+    "Hello again",
+    "Welcome back",
+    "Great to have you here",
+    "Welcome",
+    "Good day",
+    "Hello there",
+    "Welcome back",
+    "Glad you're here"
+  ];
+  
+  // Rotate greeting every 5 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentGreetingIndex((prev) => (prev + 1) % greetings.length);
+    }, 5000);
+    
+    return () => clearInterval(interval);
+  }, [greetings.length]);
+  
   // Suggestions removed
   // Listen for global "open-new-goal" to open the form from nav components
   useEffect(() => {
@@ -67,8 +95,8 @@ const Dashboard = ({ session }) => {
   };
 
   const handleGoalClick = (goal) => {
-    setSelectedGoal(goal);
-    setShowProgressModal(true);
+    setSelectedGoalForRoadmap(goal);
+    setShowRoadmapModal(true);
   };
 
   // (Filters UI removed) Keep filters state to support future server filtering via useGoals
@@ -90,20 +118,11 @@ const Dashboard = ({ session }) => {
   }
 
   return (
-    <div className="min-h-screen app-bg relative overflow-hidden">
-      {/* Subtle background pattern */}
-      <div className="absolute inset-0 opacity-5 pointer-events-none">
-        <div className="absolute inset-0" style={{
-          backgroundImage: `
-            radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
-            radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
-            radial-gradient(circle at 40% 40%, rgba(236, 72, 153, 0.1) 0%, transparent 50%)
-          `
-        }} />
-      </div>
+         <div className="min-h-screen app-bg">
       
-      {/* Main content */}
-      <div className="relative z-10 w-full px-6 py-6">
+      
+             {/* Main content */}
+       <div className="w-full px-6 py-6">
 
 
         {/* Personalized Greeting */}
@@ -114,24 +133,24 @@ const Dashboard = ({ session }) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, ease: 'easeOut' }}
           >
-            <motion.div
-              className="inline-flex items-center space-x-3 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 px-6 py-3 rounded-2xl border border-white/20 dark:border-zinc-800/50"
-              whileHover={{ scale: 1.02 }}
-              transition={{ duration: 0.2 }}
+            <motion.h2 
+              key={currentGreetingIndex}
+              className="text-2xl font-medium text-gray-900 dark:text-zinc-100 mb-2"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              transition={{ duration: 0.3 }}
             >
-              <div className="w-2 h-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full animate-pulse"></div>
-              <h2 className="text-xl font-semibold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
-                Howdy, {session.user.user_metadata?.display_name || session.user.email?.split('@')[0] || 'there'}! 👋
-              </h2>
-              <div className="w-2 h-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full animate-pulse" style={{ animationDelay: '0.5s' }}></div>
-            </motion.div>
-            <motion.p
-              className="mt-3 text-gray-600 dark:text-zinc-400 text-sm"
+              {greetings[currentGreetingIndex]}, {session.user.user_metadata?.display_name || session.user.email?.split('@')[0] || 'there'}
+            </motion.h2>
+            <motion.p 
+              key={currentGreetingIndex}
+              className="text-gray-600 dark:text-zinc-400 text-base"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.2, duration: 0.4 }}
+              transition={{ delay: 0.1, duration: 0.3 }}
             >
-              Ready to crush some goals today?
+              {currentGreetingIndex % 2 === 0 ? "Let's make progress on your goals" : "Ready to tackle today's objectives"}
             </motion.p>
           </motion.div>
         )}
@@ -150,7 +169,7 @@ const Dashboard = ({ session }) => {
             style={{ minWidth: (searchFocused || searchTerm) ? undefined : 280 }}
           >
             <motion.span initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1, duration: 0.3 }}>
-              <MagnifyingGlassIcon className="w-5 h-5 text-blue-500 absolute left-3 top-1/2 -translate-y-1/2" />
+              <MagnifyingGlassIcon className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
             </motion.span>
             <input
               type="text"
@@ -159,14 +178,9 @@ const Dashboard = ({ session }) => {
               onFocus={() => setSearchFocused(true)}
               onBlur={() => setSearchFocused(false)}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 bg-white/90 dark:bg-zinc-900/80 backdrop-blur-xl border border-white/20 dark:border-zinc-800/50 rounded-2xl shadow-lg focus:shadow-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 text-gray-900 dark:text-zinc-100 placeholder-gray-500 dark:placeholder-zinc-400"
+              className="w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-600 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-gray-900 dark:text-zinc-100 placeholder-gray-500 dark:placeholder-zinc-400"
             />
-            {/* Subtle glow effect on focus */}
-            <motion.div
-              className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-500/20 to-purple-500/20 opacity-0 blur-xl"
-              animate={{ opacity: searchFocused ? 1 : 0 }}
-              transition={{ duration: 0.3 }}
-            />
+
           </motion.div>
         </motion.div>
 
@@ -183,13 +197,13 @@ const Dashboard = ({ session }) => {
             >
               {/* Loading skeleton */}
               <div className="text-center mb-8">
-                <div className="w-32 h-8 bg-gradient-to-r from-gray-200 to-gray-300 dark:from-zinc-700 dark:to-zinc-600 rounded-full mx-auto animate-pulse"></div>
+                <div className="w-32 h-8 bg-gray-200 dark:bg-zinc-700 rounded mx-auto animate-pulse"></div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {[1, 2, 3].map((i) => (
                   <motion.div
                     key={i}
-                    className="h-64 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border border-white/20 dark:border-zinc-800/50 rounded-2xl p-6 animate-pulse"
+                    className="h-64 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-lg p-6 animate-pulse"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.1, duration: 0.6 }}
@@ -216,10 +230,10 @@ const Dashboard = ({ session }) => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
             >
-              <div className="mb-6">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/20 dark:to-purple-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <FlagIcon className="w-8 h-8 text-blue-600 dark:text-blue-400" />
-                </div>
+                             <div className="mb-6">
+                 <div className="w-16 h-16 bg-gray-100 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                   <FlagIcon className="w-8 h-8 text-gray-600 dark:text-zinc-400" />
+                 </div>
                 <h3 className="text-xl font-bold text-gray-900 dark:text-zinc-100 mb-2">
                   {searchTerm ? 'No active goals found' : 'Ready to set your first goal?'}
                 </h3>
@@ -231,14 +245,14 @@ const Dashboard = ({ session }) => {
                 </p>
               </div>
               {!searchTerm && (
-                <motion.button 
-                  className="btn-primary bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-700 hover:to-purple-800 shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => window.location.hash = '#/suggestions'}
-                >
-                  Get Goal Suggestions
-                </motion.button>
+                                 <motion.button 
+                   className="btn-primary bg-blue-600 hover:bg-blue-700 shadow-sm hover:shadow-md transition-all duration-200"
+                   whileHover={{ scale: 1.02 }}
+                   whileTap={{ scale: 0.98 }}
+                   onClick={() => window.location.hash = '#/suggestions'}
+                 >
+                   Get Goal Suggestions
+                 </motion.button>
               )}
             </motion.div>
           )
@@ -250,22 +264,22 @@ const Dashboard = ({ session }) => {
             transition={{ duration: 0.6, delay: 0.2 }}
           >
             {/* Goals count and quick stats */}
-            <motion.div 
-              className="text-center"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-            >
-              <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 px-4 py-2 rounded-full">
-                <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
-                  {filteredGoals.length} active goal{filteredGoals.length !== 1 ? 's' : ''}
-                </span>
-                <div className="w-1 h-1 bg-blue-400 rounded-full"></div>
-                <span className="text-sm text-blue-600 dark:text-blue-400">
-                  {filteredGoals.filter(g => g.progress && g.progress.length > 0).length} with progress
-                </span>
-              </div>
-            </motion.div>
+                         <motion.div 
+               className="text-center"
+               initial={{ opacity: 0, y: 20 }}
+               animate={{ opacity: 1, y: 0 }}
+               transition={{ duration: 0.6, delay: 0.3 }}
+             >
+               <div className="inline-flex items-center space-x-2 bg-gray-100 dark:bg-zinc-800 px-4 py-2 rounded-lg">
+                 <span className="text-sm font-medium text-gray-700 dark:text-zinc-300">
+                   {filteredGoals.length} active goal{filteredGoals.length !== 1 ? 's' : ''}
+                 </span>
+                 <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+                 <span className="text-sm text-gray-600 dark:text-zinc-400">
+                   {filteredGoals.filter(g => g.progress && g.progress.length > 0).length} with progress
+                 </span>
+               </div>
+             </motion.div>
 
             {/* Enhanced Goals Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -301,6 +315,15 @@ const Dashboard = ({ session }) => {
         onClose={() => {
           setShowProgressModal(false);
           setSelectedGoal(null);
+        }}
+      />
+
+      <RoadmapModal
+        goal={selectedGoalForRoadmap}
+        isOpen={showRoadmapModal}
+        onClose={() => {
+          setShowRoadmapModal(false);
+          setSelectedGoalForRoadmap(null);
         }}
       />
 

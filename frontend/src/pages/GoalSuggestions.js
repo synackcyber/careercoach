@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FlagIcon, TrashIcon, PlusIcon, SparklesIcon } from '@heroicons/react/24/outline';
-import { userProfileApi, aiApi } from '../services/api';
+import { FlagIcon, TrashIcon, PlusIcon, SparklesIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { userProfileApi, aiApi, goalApi } from '../services/api';
 import PageTitle from '../components/PageTitle';
 
 export default function GoalSuggestions() {
@@ -10,6 +10,9 @@ export default function GoalSuggestions() {
   const [userProfile, setUserProfile] = useState(null);
   const [suggestedGoals, setSuggestedGoals] = useState([]);
   const [selectedGoals, setSelectedGoals] = useState([]);
+  const [showRoadmapModal, setShowRoadmapModal] = useState(false);
+  const [selectedGoalForModal, setSelectedGoalForModal] = useState(null);
+  const [addingToDashboard, setAddingToDashboard] = useState(false);
 
   // Load user profile and generate initial suggestions
   useEffect(() => {
@@ -192,31 +195,54 @@ export default function GoalSuggestions() {
     );
   };
 
-  const addSelectedGoalsToRoadmap = () => {
+  const addSelectedGoalsToDashboard = async () => {
     const newGoals = suggestedGoals.filter(goal => goal.selected);
-    setSelectedGoals(prev => [...prev, ...newGoals]);
     
-    // Clear selections
-    setSuggestedGoals(prev => 
-      prev.map(goal => ({ ...goal, selected: false }))
-    );
+    if (newGoals.length === 0) return;
+    
+    try {
+      setAddingToDashboard(true);
+      
+      // Add each selected goal to the dashboard via API
+      for (const goal of newGoals) {
+        const goalData = {
+          title: goal.title,
+          description: goal.description,
+          category: goal.category,
+          estimated_weeks: goal.estimated_weeks,
+          difficulty: goal.difficulty,
+          roadmap: goal.roadmap, // Store roadmap data for the modal
+          status: 'active',
+          priority: 'medium'
+        };
+        
+        await goalApi.create(goalData);
+      }
+      
+      // Clear selections and show success
+      setSuggestedGoals(prev => 
+        prev.map(goal => ({ ...goal, selected: false }))
+      );
+      
+      // Navigate to dashboard to see the new goals
+      window.location.hash = '#/';
+      
+    } catch (error) {
+      console.error('Failed to add goals to dashboard:', error);
+      // You could add a toast notification here
+    } finally {
+      setAddingToDashboard(false);
+    }
   };
 
-  const removeGoalFromRoadmap = (goalId) => {
-    setSelectedGoals(prev => prev.filter(goal => goal.id !== goalId));
+  const openRoadmapModal = (goal) => {
+    setSelectedGoalForModal(goal);
+    setShowRoadmapModal(true);
   };
 
-  const removeStepFromRoadmap = (goalId, stepId) => {
-    setSelectedGoals(prev => 
-      prev.map(goal => 
-        goal.id === goalId
-          ? {
-              ...goal,
-              roadmap: goal.roadmap.filter(step => step.id !== stepId)
-            }
-          : goal
-      )
-    );
+  const closeRoadmapModal = () => {
+    setShowRoadmapModal(false);
+    setSelectedGoalForModal(null);
   };
 
   const requestMoreSuggestions = async () => {
@@ -354,18 +380,26 @@ export default function GoalSuggestions() {
             {suggestedGoals.some(goal => goal.selected) && (
               <div className="mt-6 text-center">
                 <button
-                  onClick={addSelectedGoalsToRoadmap}
-                  className="px-6 py-3 bg-accent-600 hover:bg-accent-700 text-white rounded-xl font-semibold transition-colors transform hover:scale-105"
+                  onClick={addSelectedGoalsToDashboard}
+                  disabled={addingToDashboard}
+                  className="px-6 py-3 bg-accent-600 hover:bg-accent-700 text-white rounded-xl font-semibold transition-colors transform hover:scale-105 disabled:opacity-50"
                 >
-                  Add Selected Goals to My Roadmap
+                  {addingToDashboard ? (
+                    <>
+                      <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2 inline"></div>
+                      Adding to Dashboard...
+                    </>
+                  ) : (
+                    'Add Selected Goals to Dashboard'
+                  )}
                 </button>
               </div>
             )}
           </div>
         </motion.div>
 
-        {/* Selected Goals Roadmap */}
-        {selectedGoals.length > 0 && (
+        {/* Preview Section - Show selected goals before adding */}
+        {suggestedGoals.some(goal => goal.selected) && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -373,66 +407,27 @@ export default function GoalSuggestions() {
             className="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl p-6"
           >
             <h2 className="text-xl font-bold text-gray-900 dark:text-zinc-100 mb-6">
-              My Achievement Roadmap
+              Preview: Goals to Add
             </h2>
 
-            <div className="space-y-8">
-              {selectedGoals.map((goal) => (
-                <div key={goal.id} className="border border-gray-200 dark:border-zinc-700 rounded-xl p-6">
-                  <div className="flex items-start justify-between mb-4">
+            <div className="space-y-4">
+              {suggestedGoals.filter(goal => goal.selected).map((goal) => (
+                <div key={goal.id} className="border border-gray-200 dark:border-zinc-700 rounded-xl p-4">
+                  <div className="flex items-start justify-between mb-3">
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-zinc-100 mb-2">
                         {goal.title}
                       </h3>
-                      <p className="text-gray-600 dark:text-zinc-400">
+                      <p className="text-gray-600 dark:text-zinc-400 mb-3">
                         {goal.description}
                       </p>
                     </div>
                     <button
-                      onClick={() => removeGoalFromRoadmap(goal.id)}
-                      className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                      title="Remove goal from roadmap"
+                      onClick={() => openRoadmapModal(goal)}
+                      className="px-3 py-1 text-sm bg-accent-100 hover:bg-accent-200 dark:bg-accent-900/30 dark:hover:bg-accent-900/50 text-accent-700 dark:text-accent-300 rounded-lg transition-colors"
                     >
-                      <TrashIcon className="w-5 h-5" />
+                      View Roadmap
                     </button>
-                  </div>
-
-                  <div className="space-y-4">
-                    {goal.roadmap.map((step) => (
-                      <div key={step.id} className="bg-gray-50 dark:bg-zinc-800 rounded-lg p-4">
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="flex items-center">
-                            <div className="w-8 h-8 bg-accent-100 dark:bg-accent-900/30 rounded-full flex items-center justify-center text-sm font-semibold text-accent-700 dark:text-accent-300 mr-3">
-                              {step.week}
-                            </div>
-                            <div>
-                              <h4 className="font-medium text-gray-900 dark:text-zinc-100">
-                                {step.title}
-                              </h4>
-                              <p className="text-sm text-gray-600 dark:text-zinc-400">
-                                {step.description}
-                              </p>
-                            </div>
-                          </div>
-                          <button
-                            onClick={() => removeStepFromRoadmap(goal.id, step.id)}
-                            className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
-                            title="Remove step"
-                          >
-                            <TrashIcon className="w-4 h-4" />
-                          </button>
-                        </div>
-                        
-                        <ul className="ml-11 space-y-1">
-                          {step.tasks.map((task, index) => (
-                            <li key={index} className="text-sm text-gray-700 dark:text-zinc-300 flex items-start">
-                              <span className="w-1.5 h-1.5 bg-accent-500 rounded-full mt-2 mr-2 flex-shrink-0"></span>
-                              {task}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    ))}
                   </div>
                 </div>
               ))}
@@ -440,6 +435,100 @@ export default function GoalSuggestions() {
           </motion.div>
         )}
       </div>
+
+      {/* Roadmap Modal */}
+      <AnimatePresence>
+        {showRoadmapModal && selectedGoalForModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+            onClick={closeRoadmapModal}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Modal Header */}
+              <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-zinc-700">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-zinc-100">
+                    {selectedGoalForModal.title}
+                  </h2>
+                  <p className="text-gray-600 dark:text-zinc-400 mt-1">
+                    {selectedGoalForModal.description}
+                  </p>
+                </div>
+                <button
+                  onClick={closeRoadmapModal}
+                  className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+                >
+                  <XMarkIcon className="w-6 h-6" />
+                </button>
+              </div>
+
+              {/* Modal Content - Roadmap */}
+              <div className="p-6">
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-zinc-100 mb-4">
+                    Achievement Roadmap
+                  </h3>
+                  <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-zinc-400">
+                    <span className="px-3 py-1 bg-accent-100 dark:bg-accent-900/30 text-accent-700 dark:text-accent-300 rounded-full">
+                      {selectedGoalForModal.estimated_weeks} weeks
+                    </span>
+                    <span className="capitalize">{selectedGoalForModal.difficulty}</span>
+                    <span className="capitalize">{selectedGoalForModal.category}</span>
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                  {selectedGoalForModal.roadmap.map((step) => (
+                    <div key={step.id} className="bg-gray-50 dark:bg-zinc-800 rounded-xl p-5">
+                      <div className="flex items-start mb-4">
+                        <div className="w-10 h-10 bg-accent-100 dark:bg-accent-900/30 rounded-full flex items-center justify-center text-lg font-bold text-accent-700 dark:text-accent-300 mr-4 flex-shrink-0">
+                          {step.week}
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="text-lg font-semibold text-gray-900 dark:text-zinc-100 mb-2">
+                            {step.title}
+                          </h4>
+                          <p className="text-gray-600 dark:text-zinc-400 mb-4">
+                            {step.description}
+                          </p>
+                          
+                          <ul className="space-y-2">
+                            {step.tasks.map((task, index) => (
+                              <li key={index} className="text-gray-700 dark:text-zinc-300 flex items-start">
+                                <span className="w-2 h-2 bg-accent-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                                {task}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-zinc-700">
+                <button
+                  onClick={closeRoadmapModal}
+                  className="px-4 py-2 text-gray-600 dark:text-zinc-400 hover:text-gray-800 dark:hover:text-zinc-200 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
