@@ -41,12 +41,36 @@ export default function NewGoal() {
     responsibilityApi.getByJobRole(Number(jobRoleId))
       .then(({ data }) => {
         if (!mounted) return;
-        setResponsibilities(data?.data || []);
-        setResponsibilityId('');
+        const list = data?.data || [];
+        setResponsibilities(list);
+        // Auto-pick first responsibility if none selected yet
+        if (!responsibilityId && list.length > 0) {
+          setResponsibilityId(String(list[0].id));
+        }
       })
       .catch(() => {});
     return () => { mounted = false; };
   }, [jobRoleId]);
+
+  // Try to auto-match job role from user profile, then fallback to any responsibility
+  React.useEffect(() => {
+    if (!userProfile || !jobRoles || jobRoles.length === 0) return;
+    const profRole = (userProfile.current_role || '').trim().toLowerCase();
+    if (profRole) {
+      const match = jobRoles.find(r => (r.title || '').trim().toLowerCase() === profRole);
+      if (match) {
+        setJobRoleId(String(match.id));
+        return;
+      }
+    }
+    // Fallback: if we cannot match a role, try grabbing the first responsibility globally once
+    if (!responsibilityId) {
+      responsibilityApi.getAll().then(({ data }) => {
+        const list = data?.data || [];
+        if (list.length > 0) setResponsibilityId(String(list[0].id));
+      }).catch(() => {});
+    }
+  }, [userProfile, jobRoles]);
 
   React.useEffect(() => {
     userProfileApi.getOrCreate().then(({ data }) => {
@@ -150,10 +174,10 @@ export default function NewGoal() {
               <a href="#/account" className="text-xs text-accent-600 hover:text-accent-700">Update profile</a>
             </div>
             {/* If user has a profile with industry/role, show direct suggestions limited to 6 */}
-            {userProfile && (
+            {userProfile && responsibilityId && (
               <div className="mt-2">
-                {/* If a responsibility is chosen, we pass both; otherwise backend will rely on profile context */}
-                <AIGoalSuggestions responsibilityId={responsibilityId || 1} userProfile={userProfile} limit={6} onGoalSelect={handleGoalSelect} />
+                {/* Show 3 immediate suggestions based on profile */}
+                <AIGoalSuggestions responsibilityId={responsibilityId} userProfile={userProfile} limit={3} onGoalSelect={handleGoalSelect} />
               </div>
             )}
 
