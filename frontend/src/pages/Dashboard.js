@@ -12,33 +12,11 @@ const Dashboard = ({ session }) => {
   const [searchFocused, setSearchFocused] = useState(false);
   const [showGoalForm, setShowGoalForm] = useState(false);
   const [editingGoal, setEditingGoal] = useState(null);
-  const [currentGreetingIndex, setCurrentGreetingIndex] = useState(0);
   // const [showAISettings, setShowAISettings] = useState(false);
 
   const { goals, loading, error, initialized, createGoal, updateGoal, deleteGoal } = useGoals(filters);
   
-  // Rotating greetings array
-  const greetings = [
-    "Welcome back",
-    "Good to see you",
-    "Hello again",
-    "Welcome back",
-    "Great to have you here",
-    "Welcome",
-    "Good day",
-    "Hello there",
-    "Welcome back",
-    "Glad you're here"
-  ];
-  
-  // Rotate greeting every 5 seconds
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentGreetingIndex((prev) => (prev + 1) % greetings.length);
-    }, 5000);
-    
-    return () => clearInterval(interval);
-  }, [greetings.length]);
+
   
   // Suggestions removed
   // Listen for global "open-new-goal" to open the form from nav components
@@ -122,25 +100,12 @@ const Dashboard = ({ session }) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, ease: 'easeOut' }}
           >
-            <motion.h2 
-              key={currentGreetingIndex}
-              className="text-2xl font-medium text-gray-900 dark:text-zinc-100 mb-2"
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              transition={{ duration: 0.3 }}
-            >
-              {greetings[currentGreetingIndex]}, {session.user.user_metadata?.display_name || session.user.email?.split('@')[0] || 'there'}
-            </motion.h2>
-            <motion.p 
-              key={currentGreetingIndex}
-              className="text-gray-600 dark:text-zinc-400 text-base"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.1, duration: 0.3 }}
-            >
-              {currentGreetingIndex % 2 === 0 ? "Let's make progress on your goals" : "Ready to tackle today's objectives"}
-            </motion.p>
+            <h2 className="text-2xl font-medium text-gray-900 dark:text-zinc-100 mb-2">
+              Welcome back, {session.user.user_metadata?.display_name || session.user.email?.split('@')[0] || 'there'}
+            </h2>
+            <p className="text-gray-600 dark:text-zinc-400 text-base">
+              Let's make progress on your goals
+            </p>
           </motion.div>
         )}
 
