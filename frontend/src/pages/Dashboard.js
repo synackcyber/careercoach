@@ -1,24 +1,112 @@
 import React, { useEffect, useState } from 'react';
-import { MagnifyingGlassIcon, FlagIcon } from '@heroicons/react/24/outline';
-import { motion } from 'framer-motion';
+import { FlagIcon } from '@heroicons/react/24/outline';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useGoals } from '../hooks/useGoals';
-import GoalCard from '../components/GoalCard';
+import SuggestedGoalCard from '../components/SuggestedGoalCard';
+import RoadmapCard from '../components/RoadmapCard';
 import SimpleGoalForm from '../components/SimpleGoalForm';
-
 
 const Dashboard = ({ session }) => {
   const [filters] = useState({});
-  const [searchTerm, setSearchTerm] = useState('');
-  const [searchFocused, setSearchFocused] = useState(false);
+
   const [showGoalForm, setShowGoalForm] = useState(false);
   const [editingGoal, setEditingGoal] = useState(null);
-  // const [showAISettings, setShowAISettings] = useState(false);
+  const [selectedSuggestedGoal, setSelectedSuggestedGoal] = useState(null);
+  const [showRoadmapModal, setShowRoadmapModal] = useState(false);
+  
+  // Mock suggested goals data - replace with actual API call
+  const [suggestedGoals, setSuggestedGoals] = useState([
+    {
+      id: 1,
+      title: "Master React Hooks",
+      description: "Learn advanced React patterns and custom hooks to build more maintainable components",
+      category: "skill",
+      difficulty: "intermediate",
+      estimatedDuration: "4-6 weeks",
+      prerequisites: ["Basic React knowledge", "JavaScript ES6+"],
+      roadmap: [
+        {
+          title: "Foundation Review",
+          description: "Brush up on React basics and component lifecycle",
+          estimatedTime: "1 week",
+          steps: ["Review functional components", "Understand state management", "Practice with simple examples"]
+        },
+        {
+          title: "Hooks Deep Dive",
+          description: "Master useState, useEffect, and custom hooks",
+          estimatedTime: "2 weeks",
+          steps: ["Learn useState patterns", "Master useEffect dependencies", "Create custom hooks"]
+        },
+        {
+          title: "Advanced Patterns",
+          description: "Implement complex state logic and performance optimizations",
+          estimatedTime: "2-3 weeks",
+          steps: ["UseReducer for complex state", "Context API integration", "Performance optimization techniques"]
+        }
+      ]
+    },
+    {
+      id: 2,
+      title: "Build a Full-Stack SaaS",
+      description: "Create a complete SaaS application from frontend to backend with modern technologies",
+      category: "project",
+      difficulty: "advanced",
+      estimatedDuration: "8-12 weeks",
+      prerequisites: ["Frontend development", "Backend basics", "Database knowledge"],
+      roadmap: [
+        {
+          title: "Planning & Architecture",
+          description: "Design system architecture and plan development phases",
+          estimatedTime: "1 week",
+          steps: ["Define requirements", "Choose tech stack", "Plan database schema"]
+        },
+        {
+          title: "Frontend Development",
+          description: "Build the user interface and user experience",
+          estimatedTime: "3-4 weeks",
+          steps: ["Create UI components", "Implement routing", "Add state management"]
+        },
+        {
+          title: "Backend Development",
+          description: "Develop API endpoints and business logic",
+          estimatedTime: "3-4 weeks",
+          steps: ["Set up server", "Create API routes", "Implement authentication"]
+        }
+      ]
+    },
+    {
+      id: 3,
+      title: "Learn TypeScript",
+      description: "Master TypeScript to write more robust and maintainable JavaScript code",
+      category: "learning",
+      difficulty: "beginner",
+      estimatedDuration: "3-4 weeks",
+      prerequisites: ["JavaScript fundamentals"],
+      roadmap: [
+        {
+          title: "TypeScript Basics",
+          description: "Learn fundamental TypeScript concepts and syntax",
+          estimatedTime: "1 week",
+          steps: ["Install TypeScript", "Learn basic types", "Practice with simple examples"]
+        },
+        {
+          title: "Advanced Types",
+          description: "Master complex types and interfaces",
+          estimatedTime: "1-2 weeks",
+          steps: ["Learn interfaces", "Understand generics", "Practice with real projects"]
+        },
+        {
+          title: "Integration",
+          description: "Integrate TypeScript into existing projects",
+          estimatedTime: "1 week",
+          steps: ["Configure tsconfig", "Migrate JavaScript files", "Add type definitions"]
+        }
+      ]
+    }
+  ]);
 
   const { goals, loading, error, initialized, createGoal, updateGoal, deleteGoal } = useGoals(filters);
-  
 
-  
-  // Suggestions removed
   // Listen for global "open-new-goal" to open the form from nav components
   useEffect(() => {
     const handler = () => {
@@ -34,15 +122,7 @@ const Dashboard = ({ session }) => {
     try { console.debug('[dashboard] goals length =', goals.length, 'loading =', loading, 'error =', error); } catch (_) {}
   }, [goals, loading, error]);
 
-  // Suggestions removed
-
-
-  const filteredGoals = goals
-    .filter(goal => goal.status === 'active') // Only show active goals
-    .filter(goal =>
-      goal.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (goal.description && goal.description.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
+  const filteredSuggestedGoals = suggestedGoals;
 
   const handleCreateGoal = async (goalData) => {
     await createGoal(goalData);
@@ -64,9 +144,20 @@ const Dashboard = ({ session }) => {
     setShowGoalForm(true);
   };
 
+  const handleSuggestedGoalSelect = (suggestedGoal) => {
+    setSelectedSuggestedGoal(suggestedGoal);
+    setShowRoadmapModal(true);
+  };
 
-
-  // (Filters UI removed) Keep filters state to support future server filtering via useGoals
+  const handleAddToGoals = async (newGoal) => {
+    try {
+      await createGoal(newGoal);
+      // Remove from suggested goals
+      setSuggestedGoals(prev => prev.filter(g => g.id !== selectedSuggestedGoal.id));
+    } catch (error) {
+      console.error('Failed to add goal:', error);
+    }
+  };
 
   if (error) {
     return (
@@ -85,12 +176,9 @@ const Dashboard = ({ session }) => {
   }
 
   return (
-         <div className="min-h-screen app-bg">
-      
-      
-             {/* Main content */}
-       <div className="w-full px-6 py-6">
-
+    <div className="min-h-screen app-bg">
+      {/* Main content */}
+      <div className="w-full px-6 py-6">
 
         {/* Personalized Greeting */}
         {session?.user && (
@@ -103,45 +191,34 @@ const Dashboard = ({ session }) => {
             <h2 className="text-2xl font-medium text-gray-900 dark:text-zinc-100 mb-2">
               Welcome back, {session.user.user_metadata?.display_name || session.user.email?.split('@')[0] || 'there'}
             </h2>
-            <p className="text-gray-600 dark:text-zinc-400 text-base">
-              Let's make progress on your goals
+            <p className="text-gray-600 dark:text-zinc-400 text-base mb-4">
+              Discover personalized goal suggestions to accelerate your growth
             </p>
+            
+            {/* Navigation to My Goals */}
+            <motion.div
+              className="flex justify-center"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 0.4 }}
+            >
+              <motion.button
+                onClick={() => window.location.hash = '#/my-goals'}
+                className="inline-flex items-center space-x-2 px-4 py-2 bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-700 dark:text-zinc-300 rounded-lg transition-colors text-sm font-medium"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <FlagIcon className="w-4 h-4" />
+                <span>View My Goals</span>
+              </motion.button>
+            </motion.div>
           </motion.div>
         )}
 
-        <motion.div
-          className="mb-8 flex justify-center"
-          initial={{ opacity: 0, y: -12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: 'easeOut' }}
-        >
-          <motion.div
-            className="relative"
-            initial={{ scale: 0.98 }}
-            animate={{ width: (searchFocused || searchTerm) ? '100%' : '60%', scale: 1 }}
-            transition={{ type: 'spring', stiffness: 320, damping: 40 }}
-            style={{ minWidth: (searchFocused || searchTerm) ? undefined : 280 }}
-          >
-            <motion.span initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1, duration: 0.3 }}>
-              <MagnifyingGlassIcon className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            </motion.span>
-            <input
-              type="text"
-              placeholder="Search your goals..."
-              value={searchTerm}
-              onFocus={() => setSearchFocused(true)}
-              onBlur={() => setSearchFocused(false)}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-600 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-gray-900 dark:text-zinc-100 placeholder-gray-500 dark:placeholder-zinc-400"
-            />
 
-          </motion.div>
-        </motion.div>
 
-        {/* Suggestions removed */}
-
-        {/* Goals Grid. Hide empty-state until first load completes to avoid flash. */}
-        {filteredGoals.length === 0 ? (
+        {/* Suggested Goals Grid */}
+        {filteredSuggestedGoals.length === 0 ? (
           (!initialized || loading) ? (
             <motion.div 
               className="space-y-8"
@@ -184,30 +261,17 @@ const Dashboard = ({ session }) => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
             >
-                             <div className="mb-6">
-                 <div className="w-16 h-16 bg-gray-100 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                   <FlagIcon className="w-8 h-8 text-gray-600 dark:text-zinc-400" />
-                 </div>
+              <div className="mb-6">
+                <div className="w-16 h-16 bg-gray-100 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <FlagIcon className="w-8 h-8 text-gray-600 dark:text-zinc-400" />
+                </div>
                 <h3 className="text-xl font-bold text-gray-900 dark:text-zinc-100 mb-2">
-                  {searchTerm ? 'No active goals found' : 'Ready to set your first goal?'}
+                  No suggested goals available
                 </h3>
                 <p className="text-gray-600 dark:text-zinc-400 max-w-md mx-auto">
-                  {searchTerm 
-                    ? 'Try adjusting your search or create a new active goal' 
-                    : 'Create your first goal and start building momentum toward your dreams'
-                  }
+                  Check back later for personalized goal suggestions based on your profile
                 </p>
               </div>
-              {!searchTerm && (
-                                 <motion.button 
-                   className="btn-primary bg-blue-600 hover:bg-blue-700 shadow-sm hover:shadow-md transition-all duration-200"
-                   whileHover={{ scale: 1.02 }}
-                   whileTap={{ scale: 0.98 }}
-                   onClick={() => window.location.hash = '#/suggestions'}
-                 >
-                   Get Goal Suggestions
-                 </motion.button>
-              )}
             </motion.div>
           )
         ) : (
@@ -217,32 +281,31 @@ const Dashboard = ({ session }) => {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            {/* Goals count and quick stats */}
-                         <motion.div 
-               className="text-center"
-               initial={{ opacity: 0, y: 20 }}
-               animate={{ opacity: 1, y: 0 }}
-               transition={{ duration: 0.6, delay: 0.3 }}
-             >
-               <div className="inline-flex items-center space-x-2 bg-gray-100 dark:bg-zinc-800 px-4 py-2 rounded-lg">
-                 <span className="text-sm font-medium text-gray-700 dark:text-zinc-300">
-                   {filteredGoals.length} active goal{filteredGoals.length !== 1 ? 's' : ''}
-                 </span>
-                 <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
-                 <span className="text-sm text-gray-600 dark:text-zinc-400">
-                   {filteredGoals.filter(g => g.progress && g.progress.length > 0).length} with progress
-                 </span>
-               </div>
-             </motion.div>
+            {/* Suggested Goals count */}
+            <motion.div 
+              className="text-center"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+            >
+              <div className="inline-flex items-center space-x-2 bg-gray-100 dark:bg-zinc-800 px-4 py-2 rounded-lg">
+                <span className="text-sm font-medium text-gray-700 dark:text-zinc-300">
+                  {filteredSuggestedGoals.length} suggested goal{filteredSuggestedGoals.length !== 1 ? 's' : ''}
+                </span>
+                <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+                <span className="text-sm text-gray-600 dark:text-zinc-400">
+                  Based on your profile
+                </span>
+              </div>
+            </motion.div>
 
-            {/* Enhanced Goals Grid */}
+            {/* Suggested Goals Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {filteredGoals.map((goal, index) => (
-                <GoalCard
-                  key={goal.id}
-                  goal={goal}
-                  onEdit={handleEditGoal}
-                  onDelete={handleDeleteGoal}
+              {filteredSuggestedGoals.map((suggestedGoal, index) => (
+                <SuggestedGoalCard
+                  key={suggestedGoal.id}
+                  suggestedGoal={suggestedGoal}
+                  onSelect={handleSuggestedGoalSelect}
                   delayMs={Math.min(index * 100, 800)}
                 />
               ))}
@@ -262,11 +325,19 @@ const Dashboard = ({ session }) => {
         }}
       />
 
-
-
-
-
-      {/* AI Settings removed */}
+      {/* Roadmap Modal */}
+      <AnimatePresence>
+        {showRoadmapModal && selectedSuggestedGoal && (
+          <RoadmapCard
+            suggestedGoal={selectedSuggestedGoal}
+            onClose={() => {
+              setShowRoadmapModal(false);
+              setSelectedSuggestedGoal(null);
+            }}
+            onAddToGoals={handleAddToGoals}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };
